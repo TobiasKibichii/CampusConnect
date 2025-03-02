@@ -52,6 +52,8 @@ app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
 
+
+console.log("Access Token Secret:", process.env.ACCESS_TOKEN_SECRET);
 /* MONGOOSE SETUP */
 const PORT = process.env.PORT || 6001;
 mongoose

@@ -4,78 +4,127 @@ import {
   LocationOnOutlined,
   WorkOutlineOutlined,
 } from "@mui/icons-material";
-import { Box, Typography, Divider, useTheme } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Divider,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  useTheme,
+} from "@mui/material";
 import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
-import { useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const UserWidget = ({ userId, picturePath }) => {
   const [user, setUser] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [updatedUser, setUpdatedUser] = useState({
+    firstName: "",
+    lastName: "",
+    location: "",
+    occupation: "",
+    picturePath: "",
+  });
+
   const { palette } = useTheme();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
 
-  const getUser = async () => {
-    const response = await fetch(`http://localhost:3001/users/${userId}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setUser(data);
-  };
+  const loggedInUserId = useSelector((state) => state.user?._id); // Get logged-in user ID
+  const role = useSelector((state) => state.user?.role); // Get user role
+
+  const getUser = useCallback(async () => {
+    try {
+      const response = await fetch(`http://localhost:6001/users/${userId}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setUser(data);
+      setUpdatedUser({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        location: data.location || "",
+        occupation: data.occupation || "",
+        picturePath: data.picturePath || "",
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  }, [userId, token]);
 
   useEffect(() => {
     getUser();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getUser]);
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
-  const {
-    firstName,
-    lastName,
-    location,
-    occupation,
-    viewedProfile,
-    impressions,
-    friends,
-  } = user;
+  const handleChange = (e) => {
+    setUpdatedUser({ ...updatedUser, [e.target.name]: e.target.value });
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const response = await fetch(`http://localhost:6001/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedUser),
+      });
+
+      if (!response.ok) throw new Error("Failed to update profile");
+
+      const data = await response.json();
+      setUser(data);
+      dispatch({ type: "SET_USER", payload: data });
+      setOpen(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
 
   return (
     <WidgetWrapper>
       {/* FIRST ROW */}
-      <FlexBetween
-        gap="0.5rem"
-        pb="1.1rem"
-        onClick={() => navigate(`/profile/${userId}`)}
-      >
-        <FlexBetween gap="1rem">
+      <FlexBetween gap="0.5rem" pb="1.1rem">
+        <FlexBetween
+          gap="1rem"
+          onClick={() => navigate(`/profile/${userId}`)}
+          sx={{ cursor: "pointer" }}
+        >
           <UserImage image={picturePath} />
           <Box>
-            <Typography
-              variant="h4"
-              color={dark}
-              fontWeight="500"
-              sx={{
-                "&:hover": {
-                  color: palette.primary.light,
-                  cursor: "pointer",
-                },
-              }}
-            >
-              {firstName} {lastName}
+            <Typography variant="h4" color={dark} fontWeight="500">
+              {user.firstName} {user.lastName}
             </Typography>
-            <Typography color={medium}>{friends.length} friends</Typography>
+            <Typography color={medium}>
+              {user.friends.length} friends
+            </Typography>
           </Box>
         </FlexBetween>
-        <ManageAccountsOutlined />
+
+        {/* Edit Profile Button */}
+        <IconButton
+          onClick={() => setOpen(true)}
+          disabled={userId !== loggedInUserId && role !== "admin"}
+        >
+          <ManageAccountsOutlined />
+        </IconButton>
       </FlexBetween>
 
       <Divider />
@@ -84,11 +133,11 @@ const UserWidget = ({ userId, picturePath }) => {
       <Box p="1rem 0">
         <Box display="flex" alignItems="center" gap="1rem" mb="0.5rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} />
-          <Typography color={medium}>{location}</Typography>
+          <Typography color={medium}>{user.location}</Typography>
         </Box>
         <Box display="flex" alignItems="center" gap="1rem">
           <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
-          <Typography color={medium}>{occupation}</Typography>
+          <Typography color={medium}>{user.occupation}</Typography>
         </Box>
       </Box>
 
@@ -99,13 +148,13 @@ const UserWidget = ({ userId, picturePath }) => {
         <FlexBetween mb="0.5rem">
           <Typography color={medium}>Who's viewed your profile</Typography>
           <Typography color={main} fontWeight="500">
-            {viewedProfile}
+            {user.viewedProfile}
           </Typography>
         </FlexBetween>
         <FlexBetween>
           <Typography color={medium}>Impressions of your post</Typography>
           <Typography color={main} fontWeight="500">
-            {impressions}
+            {user.impressions}
           </Typography>
         </FlexBetween>
       </Box>
@@ -144,6 +193,61 @@ const UserWidget = ({ userId, picturePath }) => {
           <EditOutlined sx={{ color: main }} />
         </FlexBetween>
       </Box>
+
+      {/* Profile Update Dialog */}
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>Edit Profile</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="First Name"
+            name="firstName"
+            value={updatedUser.firstName}
+            onChange={handleChange}
+            margin="dense"
+          />
+          <TextField
+            fullWidth
+            label="Last Name"
+            name="lastName"
+            value={updatedUser.lastName}
+            onChange={handleChange}
+            margin="dense"
+          />
+          <TextField
+            fullWidth
+            label="Location"
+            name="location"
+            value={updatedUser.location}
+            onChange={handleChange}
+            margin="dense"
+          />
+          <TextField
+            fullWidth
+            label="Occupation"
+            name="occupation"
+            value={updatedUser.occupation}
+            onChange={handleChange}
+            margin="dense"
+          />
+          <TextField
+            fullWidth
+            label="Profile Picture URL"
+            name="picturePath"
+            value={updatedUser.picturePath}
+            onChange={handleChange}
+            margin="dense"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleUpdate} color="primary">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </WidgetWrapper>
   );
 };

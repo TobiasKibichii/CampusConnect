@@ -1,3 +1,5 @@
+import WidgetWrapper from "components/WidgetWrapper";
+
 import {
   EditOutlined,
   DeleteOutlined,
@@ -16,11 +18,12 @@ import {
   Button,
   IconButton,
   useMediaQuery,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Dropzone from "react-dropzone";
 import UserImage from "components/UserImage";
-import WidgetWrapper from "components/WidgetWrapper";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
@@ -30,8 +33,12 @@ const MyPostWidget = ({ picturePath }) => {
   const [isImage, setIsImage] = useState(false);
   const [image, setImage] = useState(null);
   const [post, setPost] = useState("");
+  const [postType, setPostType] = useState("post");
+  const [eventDate, setEventDate] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+
   const { palette } = useTheme();
-  const { _id } = useSelector((state) => state.user);
+  const { _id, role } = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
@@ -41,20 +48,31 @@ const MyPostWidget = ({ picturePath }) => {
     const formData = new FormData();
     formData.append("userId", _id);
     formData.append("description", post);
+    formData.append("type", postType);
+
+    if (postType === "event") {
+      formData.append("eventDate", eventDate);
+      formData.append("eventLocation", eventLocation);
+    }
+
     if (image) {
       formData.append("picture", image);
       formData.append("picturePath", image.name);
     }
 
-    const response = await fetch(`http://localhost:3001/posts`, {
+    const response = await fetch(`http://localhost:6001/posts`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
     });
+
     const posts = await response.json();
     dispatch(setPosts({ posts }));
     setImage(null);
     setPost("");
+    setEventDate("");
+    setEventLocation("");
+    setPostType("post");
   };
 
   return (
@@ -73,6 +91,37 @@ const MyPostWidget = ({ picturePath }) => {
           }}
         />
       </FlexBetween>
+
+      {/* Allow Editors & Admins to Choose Post Type */}
+      {(role === "editor" || role === "admin") && (
+        <Select
+          value={postType}
+          onChange={(e) => setPostType(e.target.value)}
+          sx={{ width: "100%", mt: 2 }}
+        >
+          <MenuItem value="post">Post</MenuItem>
+          <MenuItem value="event">Event</MenuItem>
+        </Select>
+      )}
+
+      {/* Event Fields (Only Show if Event is Selected) */}
+      {postType === "event" && (
+        <Box mt={2}>
+          <InputBase
+            type="date"
+            value={eventDate}
+            onChange={(e) => setEventDate(e.target.value)}
+            sx={{ width: "100%", mb: 2, p: 1, border: `1px solid ${medium}` }}
+          />
+          <InputBase
+            placeholder="Event Location"
+            value={eventLocation}
+            onChange={(e) => setEventLocation(e.target.value)}
+            sx={{ width: "100%", p: 1, border: `1px solid ${medium}` }}
+          />
+        </Box>
+      )}
+
       {isImage && (
         <Box
           border={`1px solid ${medium}`}
@@ -163,7 +212,7 @@ const MyPostWidget = ({ picturePath }) => {
             borderRadius: "3rem",
           }}
         >
-          POST
+          {postType === "event" ? "CREATE EVENT" : "POST"}
         </Button>
       </FlexBetween>
     </WidgetWrapper>
