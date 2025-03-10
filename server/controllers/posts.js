@@ -48,32 +48,47 @@ export const getFeedPosts = async (req, res) => {
     } else if (type === "friends" && userId) {
       const user = await User.findById(userId);
       if (!user) return res.status(404).json({ message: "User not found" });
-
       query.userId = { $in: [...user.friends, userId] }; // Fetch user's and friends' posts
     } else {
       const adminEditors = await User.find({ role: { $in: ["admin", "editor"] } }).select("_id");
       const adminEditorIds = adminEditors.map(user => user._id);
-      
       query.$or = [
         { userId: { $in: adminEditorIds } }, // Admins & Editors' posts
         { type: "event" } // All events
       ];
     }
 
-    // 🔥 Fix: Populate comments with user details
+    // Populate comments, including the likes field for both comments and nested replies
     const posts = await Post.find(query)
       .sort({ createdAt: -1 })
       .populate({
         path: "comments",
-        populate: { path: "userId", select: "firstName", select:"lastName" }, // ✅ Ensure user details in comments
+        select: "content userId likes replies createdAt", // Ensure likes is included
+        populate: [
+          { 
+            path: "userId", 
+            select: "firstName lastName picturePath" 
+          },
+          { 
+            path: "replies",
+            select: "content userId likes createdAt", // Include likes for replies as well
+            populate: { 
+              path: "userId", 
+              select: "firstName lastName picturePath" 
+            }
+          }
+        ],
       })
-      .populate("userId", "firstName", "lastName"); // ✅ Populate post owner details
-console.log(posts)
+      .populate("userId", "firstName lastName picturePath");
+
     res.status(200).json(posts);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+
 
 
 
@@ -160,44 +175,165 @@ export const postComments = async (req, res) => {
     const { userId, content, parentCommentId = null } = req.body;
     const postId = req.params.postId;
 
+    console.log(req.body);
+    // This variable will determine which comment gets updated in the replies array.
+    let actualParentCommentId = parentCommentId;
     let parentComment = null;
+
     if (parentCommentId) {
       parentComment = await Comment.findById(parentCommentId);
       if (!parentComment) {
         return res.status(400).json({ message: "Parent comment not found" });
       }
-      // Prevent replying to replies (only allow top-level comments to have replies)
+      // If replying to a reply, set the actual parent to the top-level comment.
       if (parentComment.parentCommentId) {
-        return res.status(400).json({ message: "Replies can only be one level deep." });
+        actualParentCommentId = parentComment.parentCommentId;
       }
     }
 
-    // Create new comment
+    // Create the new comment
     const newComment = new Comment({
       postId,
       userId,
       content,
-      parentCommentId,
+      parentCommentId: actualParentCommentId, // If null, it's a top-level comment; otherwise, it's a reply to a top-level comment.
     });
-
-    console.log("New Comment Saved:", newComment);
 
     await newComment.save();
 
-    // Push the new comment to the post
-    // Populate the comments with user firstName and lastName
-const updatedPost = await Post.findByIdAndUpdate(
-  postId,
-  { $push: { comments: newComment._id } }, // Update the post's comments array
-  { new: true } // Return the updated post
-).populate({
-  path: "comments",
-  populate: { path: "userId", select: "firstName lastName" }, // ✅ Fix: Select correct user fields
-});
+    if (actualParentCommentId) {
+      // Update the top-level comment's replies array.
+      await Comment.findByIdAndUpdate(actualParentCommentId, { 
+        $push: { replies: newComment._id } 
+      });
+    } else {
+      // Push top-level comment to post
+      await Post.findByIdAndUpdate(postId, { 
+        $push: { comments: newComment._id } 
+      });
+    }
+
+    // Fetch the updated post with nested comments
+    const updatedPost = await Post.findById(postId)
+      .populate({
+        path: "comments",
+        populate: [
+          { path: "userId", select: "firstName lastName" },
+          { 
+            path: "replies",
+            populate: { path: "userId", select: "firstName lastName" }
+          }
+        ],
+      })
+      .populate("userId", "firstName lastName");
 
     res.status(200).json(updatedPost);
   } catch (err) {
     console.error("Error adding comment:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export const getPostComments = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    // Fetch only top-level comments for the post, including likes and nested replies
+    const comments = await Comment.find({ postId, parentCommentId: null })
+      .select("content userId likes replies createdAt") // Ensure likes are included
+      .populate("userId", "firstName lastName profilePic")
+      .populate({
+        path: "replies",
+        select: "content userId likes createdAt", // Include likes for replies as well
+        populate: { path: "userId", select: "firstName lastName profilePic" },
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(comments);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+export const updateComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { content } = req.body;
+    const userId = req.user.id; // assuming you've attached user info from token
+
+    // Fetch the comment
+    const comment = await Comment.findById(commentId);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+    
+    // Check ownership (or admin privileges)
+    if (comment.userId.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Update comment content and timestamp
+    comment.content = content;
+    comment.updatedAt = Date.now();
+    await comment.save();
+
+    res.status(200).json(comment);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const deleteComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const userId = req.user.id; // assuming you have a middleware that attaches the user
+
+    // Fetch the comment
+    const comment = await Comment.findById(commentId);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    // Check if user is authorized to delete (own comment or admin)
+    if (comment.userId.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Delete the comment
+    await Comment.findByIdAndDelete(commentId);
+
+    // Remove comment reference from parent document
+    if (comment.parentCommentId) {
+      await Comment.findByIdAndUpdate(comment.parentCommentId, { $pull: { replies: commentId } });
+    } else {
+      await Post.findByIdAndUpdate(postId, { $pull: { comments: commentId } });
+    }
+
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+export const toggleLikeComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const userId = req.user.id; // Assuming authentication middleware adds `req.user`
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    const isLiked = comment.likes.includes(userId);
+
+    if (isLiked) {
+      comment.likes = comment.likes.filter((id) => id.toString() !== userId);
+    } else {
+      comment.likes.push(userId);
+    }
+
+    await comment.save();
+    res.status(200).json({ message: isLiked ? "Like removed" : "Comment liked", likes: comment.likes.length });
+  } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
 };

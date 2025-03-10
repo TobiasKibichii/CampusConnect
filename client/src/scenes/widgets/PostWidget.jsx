@@ -16,12 +16,35 @@ import {
   Button,
   TextField,
 } from "@mui/material";
+import Avatar from "@mui/material/Avatar";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import EditOutlined from "@mui/icons-material/EditOutlined";
+import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
+import ReplyIcon from "@mui/icons-material/Reply";
+import { Link } from "react-router-dom";
+import axios from "axios";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost } from "state";
+
+// Helper function to format time ago
+const formatTimeAgo = (timestamp) => {
+  const now = new Date();
+  const past = new Date(timestamp);
+  const diff = now - past; // in milliseconds
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return `${seconds} sec ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
+};
 
 const PostWidget = ({
   postId,
@@ -32,15 +55,25 @@ const PostWidget = ({
   picturePath,
   userPicturePath,
   likes,
-  comments,
+  comments, // original prop (unused for rendering comments now)
   type,
   eventDate,
   eventLocation,
   attendees = [],
+  createdAt, // assumed to be passed for the post itself
 }) => {
   const [isComments, setIsComments] = useState(false);
-  const [replyingTo, setReplyingTo] = useState(null); // Track which comment is being replied to
+  const [replyingTo, setReplyingTo] = useState(null); // Track which comment/reply is being replied to
   const [replyText, setReplyText] = useState("");
+  const [newCommentText, setNewCommentText] = useState(""); // For new top-level comment input
+  const [editingCommentId, setEditingCommentId] = useState(null); // For editing a comment
+  const [editingText, setEditingText] = useState("");
+  const [fetchedComments, setFetchedComments] = useState([]); // Comments fetched from backend
+
+  const [expandedComment, setExpandedComment] = useState({}); // Track expanded replies
+  const [clikes, setCLikes] = useState({}); // Track like counts for each comment
+  const [likedComments, setLikedComments] = useState({}); // Track if a comment has been liked by the user
+
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
@@ -52,7 +85,32 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
 
-  // Like Post
+  // Function to fetch comments from backend
+  const fetchComments = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:6001/posts/${postId}/comments`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch comments");
+      const data = await response.json();
+      setFetchedComments(data);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [postId, token]);
+
+  // Like Post (unchanged)
   const patchLike = async () => {
     const response = await fetch(`http://localhost:6001/posts/${postId}/like`, {
       method: "PATCH",
@@ -66,7 +124,7 @@ const PostWidget = ({
     dispatch(setPost({ post: updatedPost }));
   };
 
-  // Attend Event
+  // Attend Event (unchanged)
   const toggleAttend = async () => {
     const response = await fetch(
       `http://localhost:6001/posts/${postId}/attend`,
@@ -83,30 +141,288 @@ const PostWidget = ({
     dispatch(setPost({ post: updatedPost }));
   };
 
-  // Handle Reply Submission
+  // Submit a reply (for both top-level replies and nested replies)
   const submitReply = async (parentComment) => {
     if (!replyText.trim()) return;
+    try {
+      const response = await fetch(
+        `http://localhost:6001/posts/${postId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            content: `@${parentComment.userId.firstName} ${replyText}`,
+            parentCommentId: parentComment._id,
+          }),
+        }
+      );
+      const updatedPost = await response.json();
+      dispatch(setPost({ post: updatedPost }));
+      setReplyText("");
+      setReplyingTo(null);
+      fetchComments();
+    } catch (error) {
+      console.error("Error submitting reply:", error);
+    }
+  };
 
-    const response = await fetch(
-      `http://localhost:6001/posts/${postId}/comments`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: loggedInUserId,
-          content: `@${parentComment.userName} ${replyText}`,
-          parentCommentId: parentComment._id, // Only reply to top-level comments
-        }),
-      }
+  // Submit a new top-level comment
+  const submitNewComment = async () => {
+    if (!newCommentText.trim()) return;
+    try {
+      const response = await fetch(
+        `http://localhost:6001/posts/${postId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            content: newCommentText,
+            parentCommentId: null,
+          }),
+        }
+      );
+      const updatedPost = await response.json();
+      dispatch(setPost({ post: updatedPost }));
+      setNewCommentText("");
+      fetchComments();
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+    }
+  };
+
+  // Update (edit) a comment or reply
+  const updateComment = async (commentId) => {
+    if (!editingText.trim()) return;
+    try {
+      const response = await fetch(
+        `http://localhost:6001/posts/${postId}/comments/${commentId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: editingText,
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to update comment");
+      fetchComments();
+      setEditingCommentId(null);
+      setEditingText("");
+    } catch (error) {
+      console.error("Error updating comment:", error);
+    }
+  };
+
+  // Delete a comment or reply
+  const deleteComment = async (commentId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:6001/posts/${postId}/comments/${commentId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to delete comment");
+      fetchComments();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+    }
+  };
+
+  // Toggle expansion of replies (for a comment)
+  const toggleCommentExpansion = (commentId) => {
+    setExpandedComment((prev) => ({
+      ...prev,
+      [commentId]: !prev[commentId],
+    }));
+  };
+
+  // Handle likes on a comment/reply
+  const toggleLike = async (commentId) => {
+    try {
+      console.log(`Toggling like for comment: ${commentId}`);
+      // Send the userId in the body
+      const response = await axios.patch(
+        `http://localhost:6001/comments/${commentId}/like`,
+        { userId: loggedInUserId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("Toggle like response:", response.data);
+      const updatedLikes = response.data.likes; // Expected to be the updated like count
+
+      // Toggle local state for liked status
+      setLikedComments((prev) => ({
+        ...prev,
+        [commentId]: !prev[commentId],
+      }));
+
+      // Update local like count state (fallback to API value if not already set)
+      setCLikes((prev) => ({
+        ...prev,
+        [commentId]: updatedLikes,
+      }));
+    } catch (error) {
+      console.error("Error liking comment:", error);
+    }
+  };
+
+  // Recursive function to render a comment and its nested replies
+  const renderComment = (comment, level = 0) => {
+    return (
+      <Box key={comment._id} ml={`${level * 2}rem`} mt="0.5rem">
+        <Divider />
+        <Box display="flex" alignItems="center" gap="0.5rem">
+          <Avatar
+            src={
+              comment.userId?._id
+                ? `http://localhost:6001/users/${comment.userId._id}/profileImage`.trim()
+                : ""
+            }
+            alt={comment.userId?.firstName}
+          />
+          <Box flex={1}>
+            {editingCommentId === comment._id ? (
+              <TextField
+                fullWidth
+                value={editingText}
+                onChange={(e) => setEditingText(e.target.value)}
+              />
+            ) : (
+              <>
+                <Typography
+                  sx={{ fontWeight: "bold", color: main, cursor: "pointer" }}
+                  component={Link}
+                  to={`/profile/${comment.userId?._id}`}
+                  style={{ textDecoration: "none", color: main }}
+                >
+                  {comment.userId?.firstName} {comment.userId?.lastName}
+                </Typography>
+                <Typography>{comment.content}</Typography>
+                <Typography variant="caption" color={main}>
+                  {formatTimeAgo(comment.createdAt)}
+                </Typography>
+              </>
+            )}
+          </Box>
+          {editingCommentId === comment._id ? (
+            <>
+              <Button onClick={() => updateComment(comment._id)} size="small">
+                Save
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditingCommentId(null);
+                  setEditingText("");
+                }}
+                size="small"
+              >
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <>
+              <IconButton onClick={() => toggleLike(comment._id)} size="small">
+                <ThumbUpIcon
+                  color={
+                    (clikes[comment._id] ?? (comment.likes?.length || 0)) > 0
+                      ? "primary"
+                      : "inherit"
+                  }
+                />
+              </IconButton>
+              <Typography>
+                {clikes[comment._id] ?? (comment.likes ? comment.likes.length : 0)}
+              </Typography>
+              <Button
+                onClick={() => {
+                  if (replyingTo?._id === comment._id) {
+                    setReplyingTo(null);
+                    setReplyText("");
+                  } else {
+                    setReplyingTo(comment);
+                    setReplyText(`@${comment.userId.firstName} `);
+                  }
+                }}
+                size="small"
+              >
+                <ReplyIcon fontSize="small" />
+              </Button>
+              {loggedInUserId === comment.userId?._id && (
+                <>
+                  <Button
+                    onClick={() => {
+                      setEditingCommentId(comment._id);
+                      setEditingText(comment.content);
+                    }}
+                    size="small"
+                  >
+                    <EditOutlined fontSize="small" />
+                  </Button>
+                  <Button onClick={() => deleteComment(comment._id)} size="small">
+                    <DeleteOutlineOutlined fontSize="small" />
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </Box>
+
+        {/* For top-level comments, show dropdown arrow with number of replies */}
+        {level === 0 && comment.replies && comment.replies.length > 0 && (
+          <Box display="flex" alignItems="center" ml="2rem" mt="0.5rem">
+            <IconButton onClick={() => toggleCommentExpansion(comment._id)} size="small">
+              <ArrowDropDownIcon
+                sx={{
+                  transform: expandedComment[comment._id]
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+                  transition: "transform 0.3s",
+                }}
+              />
+            </IconButton>
+            <Typography variant="caption">
+              {comment.replies.length}{" "}
+              {comment.replies.length === 1 ? "reply" : "replies"}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Reply input for this comment */}
+        {replyingTo?._id === comment._id && (
+          <Box mt="0.5rem" ml="2rem">
+            <TextField
+              fullWidth
+              placeholder={`Reply to @${comment.userId?.firstName}...`}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+            />
+            <Button onClick={() => submitReply(comment)} size="small">
+              Send
+            </Button>
+          </Box>
+        )}
+
+        {/* Recursively render nested replies if expanded */}
+        {expandedComment[comment._id] &&
+          comment.replies &&
+          comment.replies.map((reply) => renderComment(reply, level + 1))}
+      </Box>
     );
-
-    const updatedPost = await response.json();
-    dispatch(setPost({ post: updatedPost }));
-    setReplyText("");
-    setReplyingTo(null);
   };
 
   return (
@@ -144,6 +460,13 @@ const PostWidget = ({
         />
       )}
 
+      {/* Optionally, show time ago for post if createdAt is available */}
+      {createdAt && (
+        <Typography variant="caption" color={main} sx={{ mt: "0.5rem" }}>
+          {formatTimeAgo(createdAt)}
+        </Typography>
+      )}
+
       <FlexBetween mt="0.25rem">
         <FlexBetween gap="1rem">
           {/* Like Button */}
@@ -158,12 +481,12 @@ const PostWidget = ({
             <Typography>{likeCount}</Typography>
           </FlexBetween>
 
-          {/* Comment Button */}
+          {/* Comment Button - toggles comments section */}
           <FlexBetween gap="0.3rem">
             <IconButton onClick={() => setIsComments(!isComments)}>
               <ChatBubbleOutlineOutlined />
             </IconButton>
-            <Typography>{comments.length}</Typography>
+            <Typography>{fetchedComments.length}</Typography>
           </FlexBetween>
         </FlexBetween>
 
@@ -192,69 +515,29 @@ const PostWidget = ({
 
       {/* Comments Section */}
       {isComments && (
-        <Box mt="0.5rem">
-          {/* Input for new comments */}
-          <Box display="flex" alignItems="center" gap="0.5rem">
-            <TextField
-              fullWidth
-              placeholder="Write a comment..."
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-            />
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => submitReply({ userName: name, _id: null })} // No parentCommentId for new comments
-            >
-              Comment
-            </Button>
-          </Box>
-
-          {/* Display existing comments */}
-          {comments?.length > 0 ? (
-            comments
-              .filter((comment) => !comment.parentCommentId)
-              .map((comment) => (
-                <Box key={comment._id} mt="0.5rem">
-                  <Divider />
-                  <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
-                    <strong>
-                      {comment.userId?.firstName}
-                      {comment.userId?.lastName}
-                    </strong>
-                    : {comment.content}
-                  </Typography>
-
-                  {/* Reply Button */}
-                  <Button onClick={() => setReplyingTo(comment)} size="small">
-                    Reply
-                  </Button>
-
-                  {/* Reply Input */}
-                  {replyingTo?._id === comment._id && (
-                    <Box mt="0.5rem" pl="2rem">
-                      <TextField
-                        fullWidth
-                        placeholder={`Reply to @${comment.userId?.firstName}...`}
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                      />
-                      <Button onClick={() => submitReply(comment)} size="small">
-                        Send
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
-              ))
-          ) : (
-            <Typography sx={{ color: main, pl: "1rem" }}>
-              No comments yet.
-            </Typography>
-          )}
-
-          <Divider />
+        <Box mt="1rem">
+          {/* Input for new top-level comment */}
+          <TextField
+            fullWidth
+            placeholder="Add a comment..."
+            value={newCommentText}
+            onChange={(e) => setNewCommentText(e.target.value)}
+          />
+          <Button onClick={submitNewComment} size="small">
+            Send
+          </Button>
         </Box>
       )}
+
+      {isComments && fetchedComments?.length > 0 ? (
+        fetchedComments
+          .filter((comment) => !comment.parentCommentId)
+          .map((comment) => renderComment(comment))
+      ) : isComments ? (
+        <Typography sx={{ color: main, pl: "1rem" }}>
+          No comments yet.
+        </Typography>
+      ) : null}
     </WidgetWrapper>
   );
 };

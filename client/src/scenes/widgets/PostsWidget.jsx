@@ -59,6 +59,9 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
     }
   }, [isProfile, getPosts, getUserPosts, filter]);
 
+ 
+  
+
   return (
     <>
       {posts?.map(

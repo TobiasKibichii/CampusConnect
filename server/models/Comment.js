@@ -17,6 +17,7 @@ const CommentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], 
     parentCommentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Comment",
@@ -26,6 +27,7 @@ const CommentSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    replies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }]
   },
   { timestamps: true }
 );

@@ -1,3 +1,5 @@
+import User from "../models/User.js";
+
 import express from "express";
 import {
   getUser,
@@ -17,5 +19,19 @@ router.patch("/:id", verifyToken, updateUserProfile);
 
 /* UPDATE */
 router.patch("/:id/:friendId", verifyToken, addRemoveFriend);
+
+router.get("/:userId/profileImage", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select("picturePath");
+    console.log(user.picturePath)
+    if (!user || !user.picturePath) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+    res.set("Content-Type", "image/jpeg"); // or image/png as appropriate
+    res.send(user.picturePath);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 export default router;
