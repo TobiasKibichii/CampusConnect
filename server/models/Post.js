@@ -1,45 +1,57 @@
 import mongoose from "mongoose";
 
-const postSchema = mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
-    userId: {
-      type: String,
-      required: true,
-    },
     firstName: {
       type: String,
       required: true,
+      min: 2,
+      max: 50,
     },
     lastName: {
       type: String,
       required: true,
+      min: 2,
+      max: 50,
+    },
+    email: {
+      type: String,
+      required: true,
+      max: 50,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      min: 5,
+    },
+    picturePath: {
+      type: String,
+      default: "",
+    },
+    friends: {
+      type: Array,
+      default: [],
     },
     location: String,
-    description: String,
-    picturePath: String,
-    userPicturePath: String,
-    type: {
+    occupation: String,
+    viewedProfile: Number,
+    impressions: Number,
+    role: {
       type: String,
-      enum: ["post", "event"],
-      default: "post",
+      enum: ["user", "editor", "admin"],
+      default: "user",
     },
-    eventDate: Date, // Only used if type = "event"
-    eventLocation: String, // Only for events
-    attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // Users attending an event
-    likes: {
-      type: Map,
-      of: Boolean,
-    },
-    comments: [
-  {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Comment",
-  },
-],
+    // Combined saved items: posts and events (both stored in the "Post" collection)
+    savedItems: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    ],
   },
   { timestamps: true }
 );
 
-const Post = mongoose.model("Post", postSchema);
-
-export default Post;
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
+export default User;

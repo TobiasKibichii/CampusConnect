@@ -2,7 +2,8 @@ import {
   ChatBubbleOutlineOutlined,
   FavoriteBorderOutlined,
   FavoriteOutlined,
-  ShareOutlined,
+  BookmarkBorderOutlined,
+  BookmarkOutlined,
   EventOutlined,
   LocationOnOutlined,
   EventAvailableOutlined,
@@ -63,16 +64,16 @@ const PostWidget = ({
   createdAt, // assumed to be passed for the post itself
 }) => {
   const [isComments, setIsComments] = useState(false);
-  const [replyingTo, setReplyingTo] = useState(null); // Track which comment/reply is being replied to
+  const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
-  const [newCommentText, setNewCommentText] = useState(""); // For new top-level comment input
-  const [editingCommentId, setEditingCommentId] = useState(null); // For editing a comment
+  const [newCommentText, setNewCommentText] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingText, setEditingText] = useState("");
-  const [fetchedComments, setFetchedComments] = useState([]); // Comments fetched from backend
-
-  const [expandedComment, setExpandedComment] = useState({}); // Track expanded replies
-  const [clikes, setCLikes] = useState({}); // Track like counts for each comment
-  const [likedComments, setLikedComments] = useState({}); // Track if a comment has been liked by the user
+  const [fetchedComments, setFetchedComments] = useState([]);
+  const [expandedComment, setExpandedComment] = useState({});
+  const [clikes, setCLikes] = useState({});
+  const [likedComments, setLikedComments] = useState({});
+  const [isSaved, setIsSaved] = useState(false); // State to track saved status
 
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
@@ -139,6 +140,29 @@ const PostWidget = ({
     );
     const updatedPost = await response.json();
     dispatch(setPost({ post: updatedPost }));
+  };
+
+  // Toggle Save Post/Event (new function)
+  const patchSave = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:6001/users/save/${postId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: loggedInUserId }),
+        }
+      );
+      const updatedPost = await response.json();
+      // Update saved status locally; you could also update via Redux if desired
+      setIsSaved(!isSaved);
+      dispatch(setPost({ post: updatedPost }));
+    } catch (error) {
+      console.error("Error toggling saved status:", error);
+    }
   };
 
   // Submit a reply (for both top-level replies and nested replies)
@@ -256,22 +280,17 @@ const PostWidget = ({
   const toggleLike = async (commentId) => {
     try {
       console.log(`Toggling like for comment: ${commentId}`);
-      // Send the userId in the body
       const response = await axios.patch(
         `http://localhost:6001/comments/${commentId}/like`,
         { userId: loggedInUserId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log("Toggle like response:", response.data);
-      const updatedLikes = response.data.likes; // Expected to be the updated like count
-
-      // Toggle local state for liked status
+      const updatedLikes = response.data.likes;
       setLikedComments((prev) => ({
         ...prev,
         [commentId]: !prev[commentId],
       }));
-
-      // Update local like count state (fallback to API value if not already set)
       setCLikes((prev) => ({
         ...prev,
         [commentId]: updatedLikes,
@@ -283,18 +302,15 @@ const PostWidget = ({
 
   // Recursive function to render a comment and its nested replies
   const renderComment = (comment, level = 0) => {
+    const profileUrl = comment.userId?.picturePath
+      ? `http://localhost:6001/assets/${comment.userId.picturePath}`
+      : "/defaultAvatar.png";
+
     return (
       <Box key={comment._id} ml={`${level * 2}rem`} mt="0.5rem">
         <Divider />
         <Box display="flex" alignItems="center" gap="0.5rem">
-          <Avatar
-            src={
-              comment.userId?._id
-                ? `http://localhost:6001/users/${comment.userId._id}/profileImage`.trim()
-                : ""
-            }
-            alt={comment.userId?.firstName}
-          />
+          <Avatar src={profileUrl || ""} alt={comment.userId?.firstName} />
           <Box flex={1}>
             {editingCommentId === comment._id ? (
               <TextField
@@ -346,7 +362,8 @@ const PostWidget = ({
                 />
               </IconButton>
               <Typography>
-                {clikes[comment._id] ?? (comment.likes ? comment.likes.length : 0)}
+                {clikes[comment._id] ??
+                  (comment.likes ? comment.likes.length : 0)}
               </Typography>
               <Button
                 onClick={() => {
@@ -373,7 +390,10 @@ const PostWidget = ({
                   >
                     <EditOutlined fontSize="small" />
                   </Button>
-                  <Button onClick={() => deleteComment(comment._id)} size="small">
+                  <Button
+                    onClick={() => deleteComment(comment._id)}
+                    size="small"
+                  >
                     <DeleteOutlineOutlined fontSize="small" />
                   </Button>
                 </>
@@ -381,11 +401,12 @@ const PostWidget = ({
             </>
           )}
         </Box>
-
-        {/* For top-level comments, show dropdown arrow with number of replies */}
         {level === 0 && comment.replies && comment.replies.length > 0 && (
           <Box display="flex" alignItems="center" ml="2rem" mt="0.5rem">
-            <IconButton onClick={() => toggleCommentExpansion(comment._id)} size="small">
+            <IconButton
+              onClick={() => toggleCommentExpansion(comment._id)}
+              size="small"
+            >
               <ArrowDropDownIcon
                 sx={{
                   transform: expandedComment[comment._id]
@@ -401,8 +422,6 @@ const PostWidget = ({
             </Typography>
           </Box>
         )}
-
-        {/* Reply input for this comment */}
         {replyingTo?._id === comment._id && (
           <Box mt="0.5rem" ml="2rem">
             <TextField
@@ -416,8 +435,6 @@ const PostWidget = ({
             </Button>
           </Box>
         )}
-
-        {/* Recursively render nested replies if expanded */}
         {expandedComment[comment._id] &&
           comment.replies &&
           comment.replies.map((reply) => renderComment(reply, level + 1))}
@@ -433,8 +450,6 @@ const PostWidget = ({
         subtitle={location}
         userPicturePath={userPicturePath}
       />
-
-      {/* Display event info if it's an event */}
       {type === "event" && (
         <Box display="flex" alignItems="center" gap="0.5rem" mt="0.5rem">
           <EventOutlined sx={{ color: primary }} />
@@ -445,11 +460,9 @@ const PostWidget = ({
           <Typography color={main}>{eventLocation}</Typography>
         </Box>
       )}
-
       <Typography color={main} sx={{ mt: "1rem" }}>
         {description}
       </Typography>
-
       {picturePath && (
         <img
           width="100%"
@@ -459,17 +472,13 @@ const PostWidget = ({
           src={`http://localhost:6001/assets/${picturePath}`}
         />
       )}
-
-      {/* Optionally, show time ago for post if createdAt is available */}
       {createdAt && (
         <Typography variant="caption" color={main} sx={{ mt: "0.5rem" }}>
           {formatTimeAgo(createdAt)}
         </Typography>
       )}
-
       <FlexBetween mt="0.25rem">
         <FlexBetween gap="1rem">
-          {/* Like Button */}
           <FlexBetween gap="0.3rem">
             <IconButton onClick={patchLike}>
               {isLiked ? (
@@ -480,8 +489,6 @@ const PostWidget = ({
             </IconButton>
             <Typography>{likeCount}</Typography>
           </FlexBetween>
-
-          {/* Comment Button - toggles comments section */}
           <FlexBetween gap="0.3rem">
             <IconButton onClick={() => setIsComments(!isComments)}>
               <ChatBubbleOutlineOutlined />
@@ -489,13 +496,15 @@ const PostWidget = ({
             <Typography>{fetchedComments.length}</Typography>
           </FlexBetween>
         </FlexBetween>
-
-        <IconButton>
-          <ShareOutlined />
+        {/* Save Icon Button */}
+        <IconButton onClick={patchSave}>
+          {isSaved ? (
+            <BookmarkOutlined sx={{ color: primary }} />
+          ) : (
+            <BookmarkBorderOutlined />
+          )}
         </IconButton>
       </FlexBetween>
-
-      {/* Attend Event Button */}
       {type === "event" && (
         <Box mt="1rem">
           <Button
@@ -512,11 +521,8 @@ const PostWidget = ({
           </Typography>
         </Box>
       )}
-
-      {/* Comments Section */}
       {isComments && (
         <Box mt="1rem">
-          {/* Input for new top-level comment */}
           <TextField
             fullWidth
             placeholder="Add a comment..."
@@ -528,7 +534,6 @@ const PostWidget = ({
           </Button>
         </Box>
       )}
-
       {isComments && fetchedComments?.length > 0 ? (
         fetchedComments
           .filter((comment) => !comment.parentCommentId)

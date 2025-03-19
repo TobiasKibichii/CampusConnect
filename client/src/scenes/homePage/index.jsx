@@ -10,8 +10,9 @@ import { useSelector } from "react-redux";
 import Navbar from "scenes/navbar";
 import UserWidget from "scenes/widgets/UserWidget";
 import PostsWidget from "scenes/widgets/PostsWidget";
-import AdvertWidget from "scenes/widgets/AdvertWidget";
+import GroupWidget from "scenes/widgets/GroupWidget";
 import FriendListWidget from "scenes/widgets/FriendListWidget";
+import SavedPreviewWidget from "scenes/widgets/SavedPreviewWidget"; // New component for saved items preview
 import { useState } from "react";
 
 const HomePage = () => {
@@ -33,6 +34,8 @@ const HomePage = () => {
       >
         <Box flexBasis={isNonMobileScreens ? "26%" : undefined}>
           <UserWidget userId={_id} picturePath={picturePath} />
+          {/* New Saved Preview Widget placed below the UserWidget */}
+          <SavedPreviewWidget userId={_id} />
         </Box>
 
         <Box
@@ -59,7 +62,7 @@ const HomePage = () => {
 
         {isNonMobileScreens && (
           <Box flexBasis="26%">
-            <AdvertWidget />
+            <GroupWidget userId={_id} />
             <Box m="2rem 0" />
             <FriendListWidget userId={_id} />
           </Box>

@@ -5,8 +5,11 @@ import {
   getUser,
   getUserFriends,
   addRemoveFriend,
-  updateUserProfile
+  updateUserProfile,
+  getSavedPosts,
+  savePost
 } from "../controllers/users.js";
+import {  usersSearch } from "../controllers/search.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -33,5 +36,12 @@ router.get("/:userId/profileImage", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+
+router.get("/search", verifyToken, usersSearch);
+
+router.get("/saved", verifyToken, getSavedPosts)
+// Endpoint to toggle save on a post
+router.patch("/save/:postId", verifyToken, savePost);
 
 export default router;

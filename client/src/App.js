@@ -2,6 +2,12 @@ import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import HomePage from "scenes/homePage";
 import LoginPage from "scenes/loginPage";
 import ProfilePage from "scenes/profilePage";
+import GroupMessages from "scenes/groupMessages";
+import AdminDashboard from "scenes/adminDashboard";
+import EditorDashboard from "scenes/editorDashboard";
+import SearchResults from "scenes/searchResults";
+import SavedPosts from "scenes/savedPosts";
+
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { CssBaseline, ThemeProvider } from "@mui/material";
@@ -28,6 +34,12 @@ function App() {
               path="/profile/:userId"
               element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
             />
+             <Route path="/groupMessages/:groupId/messages" element={<GroupMessages />} />
+             <Route path="/admin" element={<AdminDashboard />} />
+             <Route path="/editor" element={<EditorDashboard />} />
+             <Route path="/search" element={<SearchResults />} />
+             <Route path="/saved" element={<SavedPosts />} />
+
           </Routes>
         </ThemeProvider>
       </BrowserRouter>

@@ -242,11 +242,11 @@ export const getPostComments = async (req, res) => {
     // Fetch only top-level comments for the post, including likes and nested replies
     const comments = await Comment.find({ postId, parentCommentId: null })
       .select("content userId likes replies createdAt") // Ensure likes are included
-      .populate("userId", "firstName lastName profilePic")
+      .populate("userId", "firstName lastName picturePath")
       .populate({
         path: "replies",
         select: "content userId likes createdAt", // Include likes for replies as well
-        populate: { path: "userId", select: "firstName lastName profilePic" },
+        populate: { path: "userId", select: "firstName lastName picturePath" },
       })
       .sort({ createdAt: -1 });
 
@@ -337,3 +337,5 @@ export const toggleLikeComment = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+

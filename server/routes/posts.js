@@ -19,7 +19,4 @@ router.get("/:postId/comments", getPostComments)
 router.patch("/:postId/comments/:commentId", verifyToken, updateComment)
 router.delete("/:postId/comments/:commentId", verifyToken, deleteComment)
 
-
-
-
 export default router;
