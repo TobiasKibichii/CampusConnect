@@ -146,7 +146,7 @@ const PostWidget = ({
   const patchSave = async () => {
     try {
       const response = await fetch(
-        `http://localhost:6001/users/save/${postId}`,
+        `http://localhost:6001/save/${postId}`,
         {
           method: "PATCH",
           headers: {

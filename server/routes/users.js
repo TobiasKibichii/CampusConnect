@@ -5,9 +5,7 @@ import {
   getUser,
   getUserFriends,
   addRemoveFriend,
-  updateUserProfile,
-  getSavedPosts,
-  savePost
+  updateUserProfile
 } from "../controllers/users.js";
 import {  usersSearch } from "../controllers/search.js";
 import { verifyToken } from "../middleware/auth.js";
@@ -40,8 +38,6 @@ router.get("/:userId/profileImage", async (req, res) => {
 
 router.get("/search", verifyToken, usersSearch);
 
-router.get("/saved", verifyToken, getSavedPosts)
-// Endpoint to toggle save on a post
-router.patch("/save/:postId", verifyToken, savePost);
+
 
 export default router;

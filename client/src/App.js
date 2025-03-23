@@ -7,6 +7,8 @@ import AdminDashboard from "scenes/adminDashboard";
 import EditorDashboard from "scenes/editorDashboard";
 import SearchResults from "scenes/searchResults";
 import SavedPosts from "scenes/savedPosts";
+import Notifications from "scenes/notifications";
+import ChatSection from "scenes/chat";
 
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
@@ -39,6 +41,8 @@ function App() {
              <Route path="/editor" element={<EditorDashboard />} />
              <Route path="/search" element={<SearchResults />} />
              <Route path="/saved" element={<SavedPosts />} />
+             <Route path="/notifications" element={<Notifications />} />
+              <Route path="/chat/:userId" element={<ChatSection />} />
 
           </Routes>
         </ThemeProvider>

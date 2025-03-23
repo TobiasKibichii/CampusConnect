@@ -1,57 +1,45 @@
 import mongoose from "mongoose";
-
-const UserSchema = new mongoose.Schema(
-  {
-    firstName: {
+ 
+ const postSchema = mongoose.Schema(
+    {
+     userId: {
       type: String,
-      required: true,
-      min: 2,
-      max: 50,
-    },
-    lastName: {
+       required: true,
+       },
+     firstName: {
       type: String,
-      required: true,
-      min: 2,
-      max: 50,
-    },
-    email: {
-      type: String,
-      required: true,
-      max: 50,
-      unique: true,
-    },
-    password: {
-      type: String,
-      required: true,
-      min: 5,
-    },
-    picturePath: {
-      type: String,
-      default: "",
-    },
-    friends: {
-      type: Array,
-      default: [],
-    },
-    location: String,
-    occupation: String,
-    viewedProfile: Number,
-    impressions: Number,
-    role: {
-      type: String,
-      enum: ["user", "editor", "admin"],
-      default: "user",
-    },
-    // Combined saved items: posts and events (both stored in the "Post" collection)
-    savedItems: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Post",
-      },
-    ],
+       required: true,
+         },
+     lastName: {
+        type: String,
+       required: true,
+       },
+     location: String,
+     description: String,
+     picturePath: String,
+     userPicturePath: String,
+     type: {
+       type: String,
+       enum: ["post", "event"],
+       default: "post",
+         },
+     eventDate: Date, // Only used if type = "event"
+     eventLocation: String, // Only for events
+     attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // Users attending an event
+     likes: {
+       type: Map,
+       of: Boolean,
+        },
+     comments: [
+   {
+     type: mongoose.Schema.Types.ObjectId,
+     ref: "Comment",
+   },
+ ],
   },
-  { timestamps: true }
-);
-
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-export default User;
+   { timestamps: true }
+ );
+ 
+ const Post = mongoose.model("Post", postSchema);
+ 
+ export default Post;

@@ -59,10 +59,12 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
     }
   }, [isProfile, getPosts, getUserPosts, filter]);
 
- 
+ console.log("Redux posts:", posts);
+
   
 
   return (
+    
     <>
       {posts?.map(
         ({

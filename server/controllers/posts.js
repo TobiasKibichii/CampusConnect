@@ -1,18 +1,32 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
 import Comment from "../models/Comment.js";
+import Notification from "../models/Notification.js";
+
 
 /* CREATE */
+
+
 export const createPost = async (req, res) => {
   try {
+    console.log(req.body)
     const { userId, description, picturePath, type, eventDate, eventLocation } = req.body;
-    const user = await User.findById(userId);
 
-    // Check role permissions
+    if (!userId || !description) {
+      return res.status(400).json({ message: "User ID and description are required." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Check role permissions for creating events
     if (type === "event" && user.role !== "editor" && user.role !== "admin") {
       return res.status(403).json({ message: "Only editors and admins can create events." });
     }
 
+    // Create the post
     const newPost = new Post({
       userId,
       firstName: user.firstName,
@@ -29,17 +43,34 @@ export const createPost = async (req, res) => {
       attendees: [],
     });
 
-    await newPost.save();
-    const posts = await Post.find();
+    const savedPost = await newPost.save();
+
+    // Bulk insert notifications for friends
+    if (user.friends && user.friends.length > 0) {
+      const notifications = user.friends.map(friendId => ({
+        userId: friendId,          // The friend receiving the notification
+        friendId: user._id,        // The user who created the post
+        postId: savedPost._id,
+        message: `${user.firstName} ${user.lastName} just posted a new update.`,
+      }));
+      await Notification.insertMany(notifications);
+    }
+
+    // Fetch all posts in descending order
+    const posts = await Post.find().sort({ createdAt: -1 });
     res.status(201).json(posts);
   } catch (err) {
-    res.status(409).json({ message: err.message });
+    console.error("Error creating post:", err);
+    res.status(500).json({ message: "Something went wrong, please try again later." });
   }
 };
 
 /* READ - Get all posts and events */
+/* READ - Get all posts and events */
 export const getFeedPosts = async (req, res) => {
+
   try {
+    
     const { type, userId } = req.query;
     let query = {};
 
@@ -51,19 +82,19 @@ export const getFeedPosts = async (req, res) => {
       query.userId = { $in: [...user.friends, userId] }; // Fetch user's and friends' posts
     } else {
       const adminEditors = await User.find({ role: { $in: ["admin", "editor"] } }).select("_id");
-      const adminEditorIds = adminEditors.map(user => user._id);
+      const adminEditorIds = adminEditors.map((user) => user._id);
       query.$or = [
         { userId: { $in: adminEditorIds } }, // Admins & Editors' posts
         { type: "event" } // All events
       ];
     }
 
-    // Populate comments, including the likes field for both comments and nested replies
+    // Fetch posts with comments and user details
     const posts = await Post.find(query)
       .sort({ createdAt: -1 })
       .populate({
         path: "comments",
-        select: "content userId likes replies createdAt", // Ensure likes is included
+        select: "content userId likes replies createdAt",
         populate: [
           { 
             path: "userId", 
@@ -71,7 +102,7 @@ export const getFeedPosts = async (req, res) => {
           },
           { 
             path: "replies",
-            select: "content userId likes createdAt", // Include likes for replies as well
+            select: "content userId likes createdAt",
             populate: { 
               path: "userId", 
               select: "firstName lastName picturePath" 
@@ -81,14 +112,13 @@ export const getFeedPosts = async (req, res) => {
       })
       .populate("userId", "firstName lastName picturePath");
 
+    // Return the posts array directly
     res.status(200).json(posts);
+    
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
-
-
-
 
 
 
@@ -97,21 +127,24 @@ export const getFeedPosts = async (req, res) => {
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log("ho")
 
     // Fetch posts only from the specified user, sorted by most recent
     const posts = await Post.find({ userId })
       .sort({ createdAt: -1 })
       .populate({
         path: "comments",
-        populate: { path: "userId", select: "firstName lastName" }, // ✅ Populate user details in comments
+        populate: { path: "userId", select: "firstName lastName" }, // Populate user details in comments
       })
-      .populate("userId", "firstName lastName"); // ✅ Populate post owner details
+      .populate("userId", "firstName lastName"); // Populate post owner details
 
+    // Return posts directly, without adding "isSaved"
     res.status(200).json(posts);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 
 /* LIKE */

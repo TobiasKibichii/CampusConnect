@@ -1,3 +1,5 @@
+import User from "../models/User.js";
+
 export const usersSearch =async (req, res) => {
   const { q, role } = req.query;
   console.log("Received search query:", q, "with role:", role); // Log incoming query parameters

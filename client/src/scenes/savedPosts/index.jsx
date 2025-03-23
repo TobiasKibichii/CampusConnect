@@ -1,83 +1,71 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { useSelector } from "react-redux";
-import {
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { setPosts } from "state";
+import PostWidget from "scenes/widgets/PostWidget";
 
-const SavedItemsPage = () => {
-  const [savedItems, setSavedItems] = useState([]);
-  const [filter, setFilter] = useState("all"); // "all", "post", "event"
+const PostsWidget = ({ userId, isProfile = false, filter }) => {
+  const dispatch = useDispatch();
+  const posts = useSelector((state) => state.posts) || []; // Ensure it's an array
   const token = useSelector((state) => state.token);
 
+  // Fetch saved posts from the backend
   useEffect(() => {
     axios
-      .get("http://localhost:6001/users/saved", {
+      .get("http://localhost:6001/save", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        setSavedItems(response.data.savedItems);
+        // Update Redux state with the saved posts
+        dispatch(setPosts({ posts: response.data }));
+        console.log(response.data)
       })
       .catch((err) => {
         console.error("Error fetching saved items:", err);
       });
-  }, [token]);
+  }, [token, dispatch]);
 
-  // Filter saved items based on type if a filter is applied
-  const filteredItems =
-    filter === "all"
-      ? savedItems
-      : savedItems.filter((item) => item.type === filter);
+  console.log("Redux posts:", posts);
 
   return (
-    <Box p="2rem">
-      <Typography variant="h4" mb="1rem">
-        Your Saved Items
-      </Typography>
-      <FormControl
-        variant="outlined"
-        size="small"
-        sx={{ mb: 2, minWidth: 150 }}
-      >
-        <InputLabel>Filter By</InputLabel>
-        <Select
-          label="Filter By"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <MenuItem value="all">All</MenuItem>
-          <MenuItem value="post">Posts</MenuItem>
-          <MenuItem value="event">Events</MenuItem>
-        </Select>
-      </FormControl>
-      <Box display="flex" flexDirection="column" gap="1rem">
-        {filteredItems.map((item) => (
-          <Box
-            key={item._id}
-            p="1rem"
-            border="1px solid #ddd"
-            borderRadius="4px"
-          >
-            <Typography variant="h6">
-              {item.type === "event" ? item.name : item.title}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Type: {item.type}
-            </Typography>
-            {/* Additional details can be added here */}
-          </Box>
-        ))}
-        {filteredItems.length === 0 && (
-          <Typography>No saved items match the filter.</Typography>
-        )}
-      </Box>
-    </Box>
+    <>
+      {posts?.map(
+        ({
+          _id,
+          userId: postUserId,
+          firstName,
+          lastName,
+          description,
+          location,
+          picturePath,
+          userPicturePath,
+          likes,
+          comments,
+          type,
+          eventDate,
+          eventLocation,
+          attendees,
+        }) => (
+          <PostWidget
+            key={_id}
+            postId={_id}
+            postUserId={postUserId}
+            name={`${firstName} ${lastName}`}
+            description={description}
+            location={location}
+            picturePath={picturePath}
+            userPicturePath={userPicturePath}
+            likes={likes}
+            comments={comments}
+            type={type} // Pass type
+            eventDate={eventDate}
+            eventLocation={eventLocation}
+            attendees={attendees}
+          />
+        )
+      )}
+    </>
   );
 };
 
-export default SavedItemsPage;
+export default PostsWidget;

@@ -3,6 +3,7 @@ import {
   EditOutlined,
   LocationOnOutlined,
   WorkOutlineOutlined,
+  ChatOutlined, // <-- Added ChatOutlined icon
 } from "@mui/icons-material";
 import {
   Box,
@@ -43,8 +44,8 @@ const UserWidget = ({ userId, picturePath }) => {
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
 
-  const loggedInUserId = useSelector((state) => state.user?._id); // Get logged-in user ID
-  const role = useSelector((state) => state.user?.role); // Get user role
+  const loggedInUserId = useSelector((state) => state.user?._id); // Logged-in user ID
+  const role = useSelector((state) => state.user?.role); // Logged-in user's role
 
   const getUser = useCallback(async () => {
     try {
@@ -119,12 +120,20 @@ const UserWidget = ({ userId, picturePath }) => {
         </FlexBetween>
 
         {/* Edit Profile Button */}
-        <IconButton
-          onClick={() => setOpen(true)}
-          disabled={userId !== loggedInUserId && role !== "admin"}
-        >
-          <ManageAccountsOutlined />
-        </IconButton>
+        <FlexBetween gap="0.5rem">
+          <IconButton
+            onClick={() => setOpen(true)}
+            disabled={userId !== loggedInUserId && role !== "admin"}
+          >
+            <ManageAccountsOutlined />
+          </IconButton>
+          {/* Message Button - Navigates to messaging section */}
+          {userId !== loggedInUserId && (
+            <IconButton onClick={() => navigate(`/chat/${userId}`)}>
+              <ChatOutlined sx={{ color: main }} />
+            </IconButton>
+          )}
+        </FlexBetween>
       </FlexBetween>
 
       <Divider />

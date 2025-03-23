@@ -42,9 +42,16 @@ const UserSchema = new mongoose.Schema(
       enum: ["user", "editor", "admin"],
       default: "user",
     },
+    // Combined saved items: posts and events (both stored in the "Post" collection)
+    savedPosts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    ],
   },
   { timestamps: true }
 );
 
-const User = mongoose.model("User", UserSchema);
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
 export default User;

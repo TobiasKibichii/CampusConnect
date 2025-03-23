@@ -16,6 +16,7 @@ import {
   ListItem,
   ListItemText,
   CircularProgress,
+  Badge,
 } from "@mui/material";
 import {
   Search,
@@ -54,10 +55,12 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [open, setOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
-  const token = useSelector((state) => state.token); // Adjust if your token is stored elsewhere
+  const token = useSelector((state) => state.token);
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
 
   const theme = useTheme();
@@ -69,12 +72,11 @@ const Navbar = () => {
 
   const fullName = `${user.firstName} ${user.lastName}`;
 
-  // For positioning the pop-up
+  // For positioning the search popper
   const inputRef = useRef(null);
-  // Debounce the search query (500ms delay)
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  // useEffect to perform live search on debounced query change
+  // Live search effect
   useEffect(() => {
     if (debouncedSearchQuery.trim() !== "") {
       setLoading(true);
@@ -107,18 +109,33 @@ const Navbar = () => {
     }
   }, [debouncedSearchQuery, token]);
 
-  // Handle clicking on a search result (for example, navigate to the user's profile)
   const handleResultClick = (result) => {
     setOpen(false);
     navigate(`/profile/${result._id}`);
   };
 
-  // Optional: a handler to manually trigger search navigation if needed
   const handleSearch = () => {
     if (searchQuery.trim() !== "") {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
+
+  // Fetch notifications count from the backend
+  useEffect(() => {
+    if (token) {
+      axios
+        .get("http://localhost:6001/notifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          // Assuming response.data is an array of notifications
+          setNotificationCount(response.data.length);
+        })
+        .catch((err) => {
+          console.error("Error fetching notifications:", err);
+        });
+    }
+  }, [token]);
 
   return (
     <FlexBetween padding="1rem 6%" backgroundColor={alt}>
@@ -228,7 +245,11 @@ const Navbar = () => {
             )}
           </IconButton>
           <Message sx={{ fontSize: "25px" }} />
-          <Notifications sx={{ fontSize: "25px" }} />
+          <IconButton onClick={() => navigate("/notifications")}>
+            <Badge badgeContent={notificationCount} color="error">
+              <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
+            </Badge>
+          </IconButton>
           <Help sx={{ fontSize: "25px" }} />
           {user && user.role === "admin" && (
             <Button
@@ -330,7 +351,11 @@ const Navbar = () => {
               )}
             </IconButton>
             <Message sx={{ fontSize: "25px" }} />
-            <Notifications sx={{ fontSize: "25px" }} />
+            <IconButton onClick={() => navigate("/notifications")}>
+              <Badge badgeContent={notificationCount} color="error">
+                <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
+              </Badge>
+            </IconButton>
             <Help sx={{ fontSize: "25px" }} />
             {user && user.role === "admin" && (
               <Button
