@@ -119,7 +119,7 @@ const UserManagement = () => {
 
   // Navigate to edit page for a user
   const handleEditUser = (userId) => {
-    navigate(`/admin/edit-user/${userId}`);
+    navigate(`http://localhost:6001/admin/users/${selectedUserId}`);
   };
 
   // Compute filtered users based on search query and role filter

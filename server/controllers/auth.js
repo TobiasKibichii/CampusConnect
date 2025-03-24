@@ -10,11 +10,14 @@ export const register = async (req, res) => {
       lastName,
       email,
       password,
-      picturePath,
       friends,
       location,
       occupation,
     } = req.body;
+
+    // Use req.file to get the uploaded file's information.
+    // Multer stores the file under req.file; we assume you want its filename.
+    const picturePath = req.file ? req.file.filename : "";
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);
@@ -24,7 +27,7 @@ export const register = async (req, res) => {
       lastName,
       email,
       password: passwordHash,
-      picturePath,
+      picturePath, // Now this comes from req.file.filename
       friends,
       location,
       occupation,
