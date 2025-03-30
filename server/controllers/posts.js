@@ -112,6 +112,7 @@ export const getFeedPosts = async (req, res) => {
       })
       .populate("userId", "firstName lastName picturePath");
 
+      console.log(posts)
     // Return the posts array directly
     res.status(200).json(posts);
     

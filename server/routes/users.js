@@ -5,12 +5,18 @@ import {
   getUser,
   getUserFriends,
   addRemoveFriend,
-  updateUserProfile
+  updateUserProfile,
+  getEditors,
+  followEditors
 } from "../controllers/users.js";
 import {  usersSearch } from "../controllers/search.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
+
+
+router.get("/editors", getEditors);
+router.put("/followEditors", verifyToken, followEditors);
 
 /* READ */
 router.get("/:id", verifyToken, getUser);
@@ -37,6 +43,7 @@ router.get("/:userId/profileImage", async (req, res) => {
 
 
 router.get("/search", verifyToken, usersSearch);
+
 
 
 

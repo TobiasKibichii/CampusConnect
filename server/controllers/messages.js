@@ -9,8 +9,8 @@ export const getChats = async (req, res) => {
     // Find messages between the two users
     const messages = await Message.find({
       $or: [
-        { senderId: sender, receiverId: receiver },
-        { senderId: receiver, receiverId: sender },
+        { sender: sender, receiver: receiver },
+        { sender: receiver, receiver: sender },
       ],
     }).sort({ createdAt: 1 }); // Sort ascending (oldest first)
     

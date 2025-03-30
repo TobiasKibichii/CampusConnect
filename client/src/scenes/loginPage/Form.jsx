@@ -55,26 +55,39 @@ const Form = () => {
   const isLogin = pageType === "login";
   const isRegister = pageType === "register";
 
+  // Updated registration function: after successful registration,
+  // save the user/token (if needed) and navigate to the follow editors page.
   const register = async (values, onSubmitProps) => {
-    // this allows us to send form info with image
     const formData = new FormData();
     for (let value in values) {
       formData.append(value, values[value]);
     }
     formData.append("picturePath", values.picture.name);
 
-    const savedUserResponse = await fetch(
-      "http://localhost:6001/auth/register",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    const savedUser = await savedUserResponse.json();
-    onSubmitProps.resetForm();
+    try {
+      const savedUserResponse = await fetch(
+        "http://localhost:6001/auth/register",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      const savedUserData = await savedUserResponse.json();
+      onSubmitProps.resetForm();
+      console.log("Registration response:", savedUserData);
 
-    if (savedUser) {
-      setPageType("login");
+      // Check if the response has a user with an _id.
+      if (savedUserData && savedUserData.user && savedUserData.user._id) {
+        // Optionally, store user info in localStorage.
+        localStorage.setItem("user", JSON.stringify(savedUserData.user));
+        localStorage.setItem("token", savedUserData.token);
+        console.log("Registered userId:", savedUserData.user._id);
+        navigate(`/follow-editors?userId=${savedUserData.user._id}`);
+      } else {
+        console.error("Registration failed, user data missing.");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
     }
   };
 
@@ -133,7 +146,7 @@ const Form = () => {
                   label="First Name"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  value={values.firstName}
+                  value={values.firstName || ""}
                   name="firstName"
                   error={
                     Boolean(touched.firstName) && Boolean(errors.firstName)
@@ -145,7 +158,7 @@ const Form = () => {
                   label="Last Name"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  value={values.lastName}
+                  value={values.lastName || ""}
                   name="lastName"
                   error={Boolean(touched.lastName) && Boolean(errors.lastName)}
                   helperText={touched.lastName && errors.lastName}
@@ -155,7 +168,7 @@ const Form = () => {
                   label="Location"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  value={values.location}
+                  value={values.location || ""}
                   name="location"
                   error={Boolean(touched.location) && Boolean(errors.location)}
                   helperText={touched.location && errors.location}
@@ -165,7 +178,7 @@ const Form = () => {
                   label="Occupation"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  value={values.occupation}
+                  value={values.occupation || ""}
                   name="occupation"
                   error={
                     Boolean(touched.occupation) && Boolean(errors.occupation)
@@ -208,12 +221,11 @@ const Form = () => {
                 </Box>
               </>
             )}
-
             <TextField
               label="Email"
               onBlur={handleBlur}
               onChange={handleChange}
-              value={values.email}
+              value={values.email || ""}
               name="email"
               error={Boolean(touched.email) && Boolean(errors.email)}
               helperText={touched.email && errors.email}
@@ -224,15 +236,13 @@ const Form = () => {
               type="password"
               onBlur={handleBlur}
               onChange={handleChange}
-              value={values.password}
+              value={values.password || ""}
               name="password"
               error={Boolean(touched.password) && Boolean(errors.password)}
               helperText={touched.password && errors.password}
               sx={{ gridColumn: "span 4" }}
             />
           </Box>
-
-          {/* BUTTONS */}
           <Box>
             <Button
               fullWidth

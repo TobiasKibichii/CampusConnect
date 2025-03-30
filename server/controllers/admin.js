@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Group from "../models/Group.js";
+import Venue from "../models/Venue.js";
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -65,5 +66,25 @@ export const getAnalytics = async (req, res) => {
   } catch (error) {
     console.error("Error fetching analytics:", error);
     res.status(500).json({ message: "Error fetching analytics data" });
+  }
+};
+
+export const getAllVenues = async (req, res) => {
+  try {
+    const venues = await Venue.find({});
+    res.json({ venues });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const createVenue = async (req, res) => {
+  try {
+    const { name, capacity } = req.body;
+    const newVenue = new Venue({ name, capacity, available: true });
+    await newVenue.save();
+    res.json({ message: "Venue added", venue: newVenue });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

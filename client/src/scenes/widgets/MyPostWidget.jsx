@@ -24,7 +24,7 @@ import {
 import FlexBetween from "components/FlexBetween";
 import Dropzone from "react-dropzone";
 import UserImage from "components/UserImage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
 
@@ -35,7 +35,11 @@ const MyPostWidget = ({ picturePath }) => {
   const [post, setPost] = useState("");
   const [postType, setPostType] = useState("post");
   const [eventDate, setEventDate] = useState("");
-  const [eventLocation, setEventLocation] = useState("");
+  // Remove free-text event location field in favor of a venue selection
+  // const [eventLocation, setEventLocation] = useState("");
+  const [selectedVenue, setSelectedVenue] = useState("");
+  const [venues, setVenues] = useState([]);
+  const [message, setMessage] = useState("");
 
   const { palette } = useTheme();
   const { _id, role } = useSelector((state) => state.user);
@@ -43,6 +47,21 @@ const MyPostWidget = ({ picturePath }) => {
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
+
+  // Fetch available venues when postType is "event"
+  useEffect(() => {
+    if (postType === "event") {
+      fetch("http://localhost:6001/venues", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          // data.venues should be an array of venue objects
+          setVenues(data.venues);
+        })
+        .catch((err) => console.error("Error fetching venues:", err));
+    }
+  }, [postType, token]);
 
   const handlePost = async () => {
     const formData = new FormData();
@@ -52,7 +71,8 @@ const MyPostWidget = ({ picturePath }) => {
 
     if (postType === "event") {
       formData.append("eventDate", eventDate);
-      formData.append("eventLocation", eventLocation);
+      // Instead of eventLocation, we use the selected venue ID.
+      formData.append("venueId", selectedVenue);
     }
 
     if (image) {
@@ -71,7 +91,7 @@ const MyPostWidget = ({ picturePath }) => {
     setImage(null);
     setPost("");
     setEventDate("");
-    setEventLocation("");
+    setSelectedVenue("");
     setPostType("post");
   };
 
@@ -113,12 +133,22 @@ const MyPostWidget = ({ picturePath }) => {
             onChange={(e) => setEventDate(e.target.value)}
             sx={{ width: "100%", mb: 2, p: 1, border: `1px solid ${medium}` }}
           />
-          <InputBase
-            placeholder="Event Location"
-            value={eventLocation}
-            onChange={(e) => setEventLocation(e.target.value)}
+          <Select
+            value={selectedVenue}
+            onChange={(e) => setSelectedVenue(e.target.value)}
+            displayEmpty
+            required
             sx={{ width: "100%", p: 1, border: `1px solid ${medium}` }}
-          />
+          >
+            <MenuItem value="">
+              <em>Select Venue</em>
+            </MenuItem>
+            {venues.map((venue) => (
+              <MenuItem key={venue._id} value={venue._id}>
+                {venue.name} (Capacity: {venue.capacity})
+              </MenuItem>
+            ))}
+          </Select>
         </Box>
       )}
 

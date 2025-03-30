@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 // Import your routes
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
+import userzRoutes from "./routes/userz.js";
 import postRoutes from "./routes/posts.js";
 import groupRoutes from "./routes/groups.js";
 import commentRoutes from "./routes/comments.js";
@@ -23,6 +24,8 @@ import searchRoutes from "./routes/search.js";
 import saveRoutes from "./routes/savePost.js";
 import notificationsRoutes from "./routes/notifications.js";
 import messagesRoutes from "./routes/messages.js";
+import venueRoutes from "./routes/venue.js";
+import eventRoutes from "./routes/event.js";
 
 // Import the Messenger model for direct messages
 import Messenger from "./models/Messenger.js";
@@ -45,6 +48,7 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 // Routes
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
+app.use("/userz", userzRoutes);
 app.use("/posts", postRoutes);
 app.use("/comments", commentRoutes);
 app.use("/groups", groupRoutes);
@@ -55,6 +59,10 @@ app.use("/search", searchRoutes);
 app.use("/save", saveRoutes);
 app.use("/notifications", notificationsRoutes);
 app.use("/messages", messagesRoutes);
+app.use('/venues', venueRoutes );
+app.use('/events', eventRoutes );
+
+
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);

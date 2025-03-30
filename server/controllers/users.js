@@ -11,6 +11,58 @@ export const getUser = async (req, res) => {
   }
 };
 
+
+export const getEditors = async (req, res) => {
+  try {
+    // Case-insensitive query to ensure we capture "editor" regardless of case
+    const editors = await User.find({ role: { $regex: new RegExp("^editor$", "i") } })
+      .select("_id firstName lastName picturePath");
+    
+    res.status(200).json(editors);
+  } catch (err) {
+    console.error("Error fetching editors:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const followEditors = async (req, res) => {
+  console.log("followEditors endpoint hit");
+  try {
+    console.log("=== followEditors START ===");
+    console.log("Request user:", req.user);
+    console.log("Request body:", req.body);
+
+    const { editors } = req.body;
+    if (!editors || !Array.isArray(editors)) {
+      console.error("Invalid editors array received:", editors);
+      return res.status(400).json({ message: "Editors must be an array." });
+    }
+
+    console.log("Editors to follow:", editors);
+
+    const userId = req.user.id;
+    console.log("Updating followed editors for user with ID:", userId);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { friends: editors } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      console.error("User not found for ID:", userId);
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    console.log("Updated user document:", updatedUser);
+    console.log("=== followEditors END ===");
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    console.error("Error in followEditors:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const getUserFriends = async (req, res) => {
   try {
     const { id } = req.params;

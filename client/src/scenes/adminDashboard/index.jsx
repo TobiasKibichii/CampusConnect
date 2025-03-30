@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import UserManagement from "./userManagement";
 import GroupManagement from "./groupManagement";
 import AnalyticsDashboard from "./analyticsDashboard";
+import VenueAdmin from "./venueAdmin";
 
 const AdminDashboard = () => {
   return (
@@ -14,6 +15,7 @@ const AdminDashboard = () => {
       {/* Future sections like Group Management, Analytics, etc. */}
       <GroupManagement />
       <AnalyticsDashboard />
+      <VenueAdmin />
     </Box>
   );
 };

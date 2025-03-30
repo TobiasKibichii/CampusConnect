@@ -1,26 +1,31 @@
 import jwt from "jsonwebtoken";
 
-export const verifyToken =  async(req, res, next) => {
+export const verifyToken = async (req, res, next) => {
   try {
     let token = req.header("Authorization");
-    
+    console.log("Incoming Authorization header:", token);
+
     if (!token) {
-       return res.status(403).send("Access Denied");
+      console.error("No token provided");
+      return res.status(403).send("Access Denied");
     }
 
     if (token.startsWith("Bearer ")) {
-      token = token.slice(7, token.length).trimLeft();
+      token = token.slice(7).trimLeft();
     }
+    
+    console.log("Token after processing:", token);
 
     const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified;
-    console.log(req.user)
+    console.log("Decoded token:", verified);
+
+    req.user = verified; // Ensure that the decoded token contains an `id` field.
     next();
   } catch (err) {
+    console.error("Token verification error:", err);
     res.status(500).json({ error: err.message });
   }
 };
-
 
 
 export const isAuthenticated = async(req, res, next) => {

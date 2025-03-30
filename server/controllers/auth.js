@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 /* REGISTER USER */
+
 export const register = async (req, res) => {
   try {
     const {
@@ -10,13 +11,10 @@ export const register = async (req, res) => {
       lastName,
       email,
       password,
-      friends,
       location,
       occupation,
     } = req.body;
 
-    // Use req.file to get the uploaded file's information.
-    // Multer stores the file under req.file; we assume you want its filename.
     const picturePath = req.file ? req.file.filename : "";
 
     const salt = await bcrypt.genSalt();
@@ -27,19 +25,27 @@ export const register = async (req, res) => {
       lastName,
       email,
       password: passwordHash,
-      picturePath, // Now this comes from req.file.filename
-      friends,
+      picturePath,
+      friends: [],
       location,
       occupation,
       viewedProfile: Math.floor(Math.random() * 10000),
       impressions: Math.floor(Math.random() * 10000),
     });
+
     const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
+
+    // Generate a token to authorize following editors right after registration
+    const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.status(201).json({ user: savedUser, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 /* LOGGING IN */
 export const login = async (req, res) => {

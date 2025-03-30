@@ -10,6 +10,7 @@ import SearchResults from "scenes/searchResults";
 import SavedPosts from "scenes/savedPosts";
 import Notifications from "scenes/notifications";
 import ChatSection from "scenes/chat";
+import FollowEditorsPage from "scenes/loginPage/followEditors";
 
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
@@ -70,7 +71,9 @@ function App() {
             <Route
               path="/chat/:userId"
               element={isAuth ? <ChatSection /> : <Navigate to="/login" />}
+    
             />
+            <Route path="/follow-editors" element={<FollowEditorsPage />} />
           </Routes>
         </ThemeProvider>
       </BrowserRouter>
