@@ -39,9 +39,25 @@ export const authSlice = createSlice({
       });
       state.posts = updatedPosts;
     },
+    updateSavedPosts: (state, action) => {
+      console.log("huuuuuuu")
+      if (state.user) {
+        
+        state.user.savedPosts = action.payload;
+      } else {
+        console.error("User not logged in, cannot update saved posts");
+      }
+    },
   },
 });
 
-export const { setMode, setLogin, setLogout, setFriends, setPosts, setPost } =
-  authSlice.actions;
+export const {
+  setMode,
+  setLogin,
+  setLogout,
+  setFriends,
+  setPosts,
+  setPost,
+  updateSavedPosts
+} = authSlice.actions;
 export default authSlice.reducer;

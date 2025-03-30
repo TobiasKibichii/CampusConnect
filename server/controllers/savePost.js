@@ -63,6 +63,7 @@ export const savePost = async (req, res) => {
     }
     await user.save();
 
+    console.log(user.savedPosts)
     res.status(200).json({ savedPosts: user.savedPosts });
   } catch (err) {
     console.error(err);

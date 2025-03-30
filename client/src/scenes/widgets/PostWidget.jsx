@@ -30,7 +30,7 @@ import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPost } from "state";
+import { setPost, updateSavedPosts } from "state";
 
 // Helper function to format time ago
 const formatTimeAgo = (timestamp) => {
@@ -52,14 +52,14 @@ const PostWidget = ({
   postUserId,
   name,
   description,
-  location,
+  location, // For event posts, this now contains the venue details (not just an ID)
   picturePath,
   userPicturePath,
   likes,
   comments, // original prop (unused for rendering comments now)
   type,
   eventDate,
-  eventLocation,
+  // Removed eventLocation prop since we are now using location for venue details
   attendees = [],
   createdAt, // assumed to be passed for the post itself
 }) => {
@@ -73,11 +73,16 @@ const PostWidget = ({
   const [expandedComment, setExpandedComment] = useState({});
   const [clikes, setCLikes] = useState({});
   const [likedComments, setLikedComments] = useState({});
-  const [isSaved, setIsSaved] = useState(false); // State to track saved status
 
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
+  // Derive saved status from the Redux user state:
+  const savedPosts = useSelector((state) => state.user.savedPosts) || [];
+  const isSaved = savedPosts
+    .map((id) => id.toString())
+    .includes(postId.toString());
+
   const isLiked = Boolean(likes[loggedInUserId]);
   const likeCount = Object.keys(likes).length;
   const isAttending = attendees.includes(loggedInUserId);
@@ -142,24 +147,20 @@ const PostWidget = ({
     dispatch(setPost({ post: updatedPost }));
   };
 
-  // Toggle Save Post/Event (new function)
+  // Toggle Save Post/Event using Redux to update the user's saved posts
   const patchSave = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:6001/save/${postId}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ userId: loggedInUserId }),
-        }
-      );
-      const updatedPost = await response.json();
-      // Update saved status locally; you could also update via Redux if desired
-      setIsSaved(!isSaved);
-      dispatch(setPost({ post: updatedPost }));
+      const response = await fetch(`http://localhost:6001/save/${postId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: loggedInUserId }),
+      });
+      const data = await response.json();
+      console.log("Backend savedPosts:", data.savedPosts);
+      dispatch(updateSavedPosts(data.savedPosts));
     } catch (error) {
       console.error("Error toggling saved status:", error);
     }
@@ -234,9 +235,7 @@ const PostWidget = ({
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            content: editingText,
-          }),
+          body: JSON.stringify({ content: editingText }),
         }
       );
       if (!response.ok) throw new Error("Failed to update comment");
@@ -447,7 +446,8 @@ const PostWidget = ({
       <Friend
         friendId={postUserId}
         name={name}
-        subtitle={location}
+        // For event posts, display the venue details from location.
+        subtitle={type === "event" ? location : location}
         userPicturePath={userPicturePath}
       />
       {type === "event" && (
@@ -457,7 +457,8 @@ const PostWidget = ({
             {new Date(eventDate).toLocaleDateString()}
           </Typography>
           <LocationOnOutlined sx={{ color: primary }} />
-          <Typography color={main}>{eventLocation}</Typography>
+          {/* Display venue details from location field instead of eventLocation */}
+          <Typography color={main}>{location}</Typography>
         </Box>
       )}
       <Typography color={main} sx={{ mt: "1rem" }}>

@@ -17,6 +17,7 @@ import {
   ListItemText,
   CircularProgress,
   Badge,
+  InputBase as MuiInputBase,
 } from "@mui/material";
 import {
   Search,
@@ -120,7 +121,7 @@ const Navbar = () => {
     }
   };
 
-  // Fetch notifications count from the backend
+  // Fetch notifications count from the backend (this may be for both messages and other notifications)
   useEffect(() => {
     if (token) {
       axios
@@ -173,7 +174,7 @@ const Navbar = () => {
                     handleSearch();
                   }
                 }}
-                inputRef={inputRef}
+                ref={inputRef}
               />
               <IconButton onClick={handleSearch}>
                 <Search />
@@ -244,7 +245,12 @@ const Navbar = () => {
               <LightMode sx={{ color: dark, fontSize: "25px" }} />
             )}
           </IconButton>
-          <Message sx={{ fontSize: "25px" }} />
+          {/* Message Icon with Badge */}
+          <IconButton onClick={() => navigate("/messages")}>
+            <Badge badgeContent={notificationCount} color="error">
+              <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
+            </Badge>
+          </IconButton>
           <IconButton onClick={() => navigate("/notifications")}>
             <Badge badgeContent={notificationCount} color="error">
               <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
@@ -297,7 +303,7 @@ const Navbar = () => {
                   backgroundColor: neutralLight,
                 },
               }}
-              input={<InputBase />}
+              input={<MuiInputBase />}
             >
               <MenuItem value={fullName}>
                 <Typography>{fullName}</Typography>
@@ -350,7 +356,12 @@ const Navbar = () => {
                 <LightMode sx={{ color: dark, fontSize: "25px" }} />
               )}
             </IconButton>
-            <Message sx={{ fontSize: "25px" }} />
+            {/* Message Icon with Badge for Mobile */}
+            <IconButton onClick={() => navigate("/messages")}>
+              <Badge badgeContent={notificationCount} color="error">
+                <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
+              </Badge>
+            </IconButton>
             <IconButton onClick={() => navigate("/notifications")}>
               <Badge badgeContent={notificationCount} color="error">
                 <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
@@ -409,7 +420,7 @@ const Navbar = () => {
                     backgroundColor: neutralLight,
                   },
                 }}
-                input={<InputBase />}
+                input={<MuiInputBase />}
               >
                 <MenuItem value={fullName}>
                   <Typography>{fullName}</Typography>

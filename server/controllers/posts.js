@@ -2,15 +2,13 @@ import Post from "../models/Post.js";
 import User from "../models/User.js";
 import Comment from "../models/Comment.js";
 import Notification from "../models/Notification.js";
-
+import Venue from "../models/Venue.js"; 
 
 /* CREATE */
-
-
 export const createPost = async (req, res) => {
   try {
-    console.log(req.body)
-    const { userId, description, picturePath, type, eventDate, eventLocation } = req.body;
+    console.log(req.body);
+    const { userId, description, picturePath, type, eventDate, venueId } = req.body;
 
     if (!userId || !description) {
       return res.status(400).json({ message: "User ID and description are required." });
@@ -26,18 +24,31 @@ export const createPost = async (req, res) => {
       return res.status(403).json({ message: "Only editors and admins can create events." });
     }
 
-    // Create the post
+    let locationValue = user.location; // default location (for posts)
+    if (type === "event") {
+      // Look up the venue details using the venueId sent from frontend.
+      const venue = await Venue.findById(venueId);
+      if (venue) {
+        // Here, you can choose what to store. For example, combine name and address:
+        locationValue = `${venue.name}`;
+      } else {
+        // If venue not found, you can set a default or return an error.
+        locationValue = "Venue not found";
+      }
+    }
+
     const newPost = new Post({
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
-      location: user.location,
+      location: locationValue,
       description,
       userPicturePath: user.picturePath,
       picturePath,
       type, // "post" or "event"
       eventDate: type === "event" ? eventDate : null,
-      eventLocation: type === "event" ? eventLocation : null,
+      // Optionally, you can store the raw venue ID separately if needed:
+      // venueId: type === "event" ? venueId : null,
       likes: {},
       comments: [],
       attendees: [],
@@ -48,8 +59,8 @@ export const createPost = async (req, res) => {
     // Bulk insert notifications for friends
     if (user.friends && user.friends.length > 0) {
       const notifications = user.friends.map(friendId => ({
-        userId: friendId,          // The friend receiving the notification
-        friendId: user._id,        // The user who created the post
+        userId: friendId,
+        friendId: user._id,
         postId: savedPost._id,
         message: `${user.firstName} ${user.lastName} just posted a new update.`,
       }));
@@ -65,12 +76,12 @@ export const createPost = async (req, res) => {
   }
 };
 
+
+
 /* READ - Get all posts and events */
 /* READ - Get all posts and events */
 export const getFeedPosts = async (req, res) => {
-
   try {
-    
     const { type, userId } = req.query;
     let query = {};
 
@@ -89,7 +100,7 @@ export const getFeedPosts = async (req, res) => {
       ];
     }
 
-    // Fetch posts with comments and user details
+    // Fetch posts with comments, user details, and populate the location (venue) details
     const posts = await Post.find(query)
       .sort({ createdAt: -1 })
       .populate({
@@ -110,10 +121,11 @@ export const getFeedPosts = async (req, res) => {
           }
         ],
       })
-      .populate("userId", "firstName lastName picturePath");
+      .populate("userId", "firstName lastName picturePath")
+      // Populate location from the Venue model (adjust the fields as needed)
+      .populate("location", "name capacity address");
 
-      console.log(posts)
-    // Return the posts array directly
+    console.log(posts);
     res.status(200).json(posts);
     
   } catch (err) {
@@ -123,12 +135,13 @@ export const getFeedPosts = async (req, res) => {
 
 
 
+
 // Get posts by a specific user
 
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log("ho")
+    console.log("Fetching posts for user:", userId);
 
     // Fetch posts only from the specified user, sorted by most recent
     const posts = await Post.find({ userId })
@@ -137,14 +150,16 @@ export const getUserPosts = async (req, res) => {
         path: "comments",
         populate: { path: "userId", select: "firstName lastName" }, // Populate user details in comments
       })
-      .populate("userId", "firstName lastName"); // Populate post owner details
+      .populate("userId", "firstName lastName")
+      // Populate the location (venue) details if available
+      .populate("location", "name capacity address");
 
-    // Return posts directly, without adding "isSaved"
     res.status(200).json(posts);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 
 

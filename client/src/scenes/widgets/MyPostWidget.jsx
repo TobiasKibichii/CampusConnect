@@ -35,8 +35,6 @@ const MyPostWidget = ({ picturePath }) => {
   const [post, setPost] = useState("");
   const [postType, setPostType] = useState("post");
   const [eventDate, setEventDate] = useState("");
-  // Remove free-text event location field in favor of a venue selection
-  // const [eventLocation, setEventLocation] = useState("");
   const [selectedVenue, setSelectedVenue] = useState("");
   const [venues, setVenues] = useState([]);
   const [message, setMessage] = useState("");
@@ -71,8 +69,8 @@ const MyPostWidget = ({ picturePath }) => {
 
     if (postType === "event") {
       formData.append("eventDate", eventDate);
-      // Instead of eventLocation, we use the selected venue ID.
-      formData.append("venueId", selectedVenue);
+      // Save the selected venue's ID as the location (Option 1)
+      formData.append("location", selectedVenue);
     }
 
     if (image) {

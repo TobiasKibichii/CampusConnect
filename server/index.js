@@ -26,6 +26,10 @@ import notificationsRoutes from "./routes/notifications.js";
 import messagesRoutes from "./routes/messages.js";
 import venueRoutes from "./routes/venue.js";
 import eventRoutes from "./routes/event.js";
+import messageNotificationsRoutes from "./routes/messageNotifications.js";
+
+import MessageNotification from "./models/MessageNotification.js";
+
 
 // Import the Messenger model for direct messages
 import Messenger from "./models/Messenger.js";
@@ -61,6 +65,7 @@ app.use("/notifications", notificationsRoutes);
 app.use("/messages", messagesRoutes);
 app.use('/venues', venueRoutes );
 app.use('/events', eventRoutes );
+app.use('/messageNotifications', messageNotificationsRoutes );
 
 
 
@@ -88,24 +93,34 @@ io.on("connection", (socket) => {
 
   // Listen for sendMessage event for real-time messaging
   socket.on("sendMessage", async ({ senderId, receiverId, text }) => {
-    try {
-      // Create and save the message in the database using the Messenger model
-      const newMessage = new Messenger({
-        sender: senderId,
-        receiver: receiverId,
-        text: text,
-      });
-      await newMessage.save();
+  try {
+    // Create and save the new message
+    const newMessage = new Messenger({
+      sender: senderId,
+      receiver: receiverId,
+      text: text,
+    });
+    await newMessage.save();
 
-      // Emit the message to the receiver's room
-      io.to(receiverId).emit("receiveMessage", newMessage);
+    // Create a notification for the receiver
+    const newNotification = new MessageNotification({
+      recipient: receiverId,           // The recipient of the message
+      sender: senderId,                // The sender of the message
+      message: text.slice(0, 50),        // A snippet of the message (e.g., first 50 characters)
+      isRead: false,
+    });
+    await newNotification.save();
 
-      // Optionally, also emit the message back to the sender for confirmation
-      socket.emit("receiveMessage", newMessage);
-    } catch (err) {
-      console.error("Error sending message:", err);
-    }
-  });
+    // Emit the message to the receiver's room
+    io.to(receiverId).emit("receiveMessage", newMessage);
+
+    // Optionally, also emit the message back to the sender for confirmation
+    socket.emit("receiveMessage", newMessage);
+  } catch (err) {
+    console.error("Error sending message:", err);
+  }
+});
+
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);

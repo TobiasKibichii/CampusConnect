@@ -11,12 +11,14 @@ import SavedPosts from "scenes/savedPosts";
 import Notifications from "scenes/notifications";
 import ChatSection from "scenes/chat";
 import FollowEditorsPage from "scenes/loginPage/followEditors";
+import MessageNotifications from "scenes/MessageNotifications";
 
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { themeSettings } from "./theme";
+
 
 function App() {
   const mode = useSelector((state) => state.mode);
@@ -74,6 +76,7 @@ function App() {
     
             />
             <Route path="/follow-editors" element={<FollowEditorsPage />} />
+            <Route path="/messages" element={<MessageNotifications />} />
           </Routes>
         </ThemeProvider>
       </BrowserRouter>
