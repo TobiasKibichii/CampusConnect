@@ -9,6 +9,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import cron from "node-cron";
 
 // Import your routes
 import authRoutes from "./routes/auth.js";
@@ -28,17 +29,22 @@ import venueRoutes from "./routes/venue.js";
 import eventRoutes from "./routes/event.js";
 import messageNotificationsRoutes from "./routes/messageNotifications.js";
 
-import MessageNotification from "./models/MessageNotification.js";
-
-
 // Import the Messenger model for direct messages
 import Messenger from "./models/Messenger.js";
+// Import the Notification model for messaging notifications
+import MessageNotification from "./models/MessageNotification.js";
+// Import your Post model (which stores both posts and events)
+import Post from "./models/Post.js";
+// Import your Venue model
+import Venue from "./models/Venue.js";
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(helmet());
@@ -63,11 +69,9 @@ app.use("/search", searchRoutes);
 app.use("/save", saveRoutes);
 app.use("/notifications", notificationsRoutes);
 app.use("/messages", messagesRoutes);
-app.use('/venues', venueRoutes );
-app.use('/events', eventRoutes );
-app.use('/messageNotifications', messageNotificationsRoutes );
-
-
+app.use("/venues", venueRoutes);
+app.use("/events", eventRoutes);
+app.use("/messageNotifications", messageNotificationsRoutes);
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
@@ -78,7 +82,7 @@ const io = new Server(server, {
   },
 });
 
-// Save the io instance in app so that it is accessible in controllers if needed
+// Save the io instance in app so it is accessible in controllers if needed
 app.set("io", io);
 
 // Socket.io connection handler
@@ -93,39 +97,86 @@ io.on("connection", (socket) => {
 
   // Listen for sendMessage event for real-time messaging
   socket.on("sendMessage", async ({ senderId, receiverId, text }) => {
-  try {
-    // Create and save the new message
-    const newMessage = new Messenger({
-      sender: senderId,
-      receiver: receiverId,
-      text: text,
-    });
-    await newMessage.save();
+    try {
+      // Create and save the new message
+      const newMessage = new Messenger({
+        sender: senderId,
+        receiver: receiverId,
+        text: text,
+      });
+      await newMessage.save();
 
-    // Create a notification for the receiver
-    const newNotification = new MessageNotification({
-      recipient: receiverId,           // The recipient of the message
-      sender: senderId,                // The sender of the message
-      message: text.slice(0, 50),        // A snippet of the message (e.g., first 50 characters)
-      isRead: false,
-    });
-    await newNotification.save();
+      // Create a notification for the receiver
+      const newNotification = new MessageNotification({
+        recipient: receiverId, // The recipient of the message
+        sender: senderId,      // The sender of the message
+        message: text.slice(0, 50), // A snippet of the message
+        isRead: false,
+      });
+      await newNotification.save();
 
-    // Emit the message to the receiver's room
-    io.to(receiverId).emit("receiveMessage", newMessage);
-
-    // Optionally, also emit the message back to the sender for confirmation
-    socket.emit("receiveMessage", newMessage);
-  } catch (err) {
-    console.error("Error sending message:", err);
-  }
-});
-
+      // Emit the message to the receiver's room
+      io.to(receiverId).emit("receiveMessage", newMessage);
+      // Optionally, also emit the message back to the sender for confirmation
+      socket.emit("receiveMessage", newMessage);
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
 });
+
+// -----------------------
+// Scheduler to update venue availability when an event ends
+// -----------------------
+
+// This scheduler uses the Post model (since events are stored there)
+// It finds event posts that have ended (i.e. eventTo < now), haven't been processed,
+// and have a status of "Scheduled". It then updates the associated venue to available,
+// sets the event status to "Ended", and marks it as processed.
+cron.schedule("* * * * *", async () => {
+  try {
+    const now = new Date();
+    console.log(`Scheduler running at ${now.toLocaleTimeString()}`);
+
+    // Find event posts (stored in Post) that have ended
+    const endedEvents = await Post.find({
+      type: "event",
+      eventTimeTo: { $lt: now },
+      processed: { $ne: true },
+      status: "Scheduled"
+    });
+
+    console.log(`Found ${endedEvents.length} ended event(s).`);
+
+    for (const event of endedEvents) {
+      console.log(`Processing event ${event._id}: eventTo=${event.eventTo}, venueId=${event.venueId}`);
+      // Update the associated venue to mark it as available.
+      if (event.venueId) {
+        const updatedVenue = await Venue.findByIdAndUpdate(event.venueId, { available: true });
+        console.log(`Venue ${event.venueId} updated to available:`, updatedVenue);
+      } else {
+        console.log(`Event ${event._id} has no venueId.`);
+      }
+      // Update the event post
+      event.status = "Ended";
+      event.processed = true;
+      const updatedEvent = await event.save();
+      console.log(`Event ${event._id} updated: status=${updatedEvent.status}, processed=${updatedEvent.processed}`);
+    }
+    
+    console.log(`Scheduler completed at ${now.toLocaleTimeString()}: Updated ${endedEvents.length} event(s).`);
+  } catch (error) {
+    console.error("Error updating event statuses and venue availability:", error);
+  }
+});
+
+// -----------------------
+// End Scheduler
+// -----------------------
 
 const PORT = process.env.PORT || 6001;
 mongoose

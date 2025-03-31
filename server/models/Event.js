@@ -5,7 +5,11 @@ const EventSchema = new mongoose.Schema({
   title: { type: String, required: true },
   requiredCapacity: { type: Number, required: true },
   assignedVenue: { type: mongoose.Schema.Types.ObjectId, ref: 'Venue' },
-  status: { type: String, default: 'Scheduled' }
+  // New fields for event time range:
+  eventFrom: { type: Date, required: true },
+  eventTo: { type: Date, required: true },
+  status: { type: String, default: 'Scheduled' },
+  processed: { type: Boolean, default: false } // Optional flag for scheduling logic
 });
 
 const Event = mongoose.model('Event', EventSchema);

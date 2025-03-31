@@ -8,8 +8,20 @@ import Venue from "../models/Venue.js";
 export const createPost = async (req, res) => {
   try {
     console.log(req.body);
-    const { userId, description, picturePath, type, eventDate, venueId } = req.body;
-
+    // Frontend sends 'location' as the venueId for events.
+    const { 
+      userId, 
+      description, 
+      picturePath, 
+      type, 
+      eventDate, 
+      location,    // This is actually the venueId for events
+      eventTimeFrom, 
+      eventTimeTo 
+    } = req.body;
+    
+    console.log("Venue ID from frontend:", location);
+    
     if (!userId || !description) {
       return res.status(400).json({ message: "User ID and description are required." });
     }
@@ -24,31 +36,37 @@ export const createPost = async (req, res) => {
       return res.status(403).json({ message: "Only editors and admins can create events." });
     }
 
-    let locationValue = user.location; // default location (for posts)
+    // For event posts, look up the venue details using the provided venueId (in the 'location' field)
+    let locationValue = user.location; // default for regular posts
+    let venueId = null;
     if (type === "event") {
-      // Look up the venue details using the venueId sent from frontend.
-      const venue = await Venue.findById(venueId);
+      const venue = await Venue.findById(location);
       if (venue) {
-        // Here, you can choose what to store. For example, combine name and address:
+        // Store a displayable value (e.g., the venue name)
         locationValue = `${venue.name}`;
+        // Mark the venue as booked
+        venue.available = false;
+        await venue.save();
+        venueId = venue._id;
       } else {
-        // If venue not found, you can set a default or return an error.
         locationValue = "Venue not found";
       }
     }
 
+    // Create the post
     const newPost = new Post({
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
-      location: locationValue,
+      location: type === "event" ? locationValue : user.location,
       description,
       userPicturePath: user.picturePath,
       picturePath,
       type, // "post" or "event"
       eventDate: type === "event" ? eventDate : null,
-      // Optionally, you can store the raw venue ID separately if needed:
-      // venueId: type === "event" ? venueId : null,
+      eventTimeFrom: type === "event" ? eventTimeFrom : null,
+      eventTimeTo: type === "event" ? eventTimeTo : null,
+      venueId: type === "event" ? venueId : null,
       likes: {},
       comments: [],
       attendees: [],
@@ -56,18 +74,10 @@ export const createPost = async (req, res) => {
 
     const savedPost = await newPost.save();
 
-    // Bulk insert notifications for friends
-    if (user.friends && user.friends.length > 0) {
-      const notifications = user.friends.map(friendId => ({
-        userId: friendId,
-        friendId: user._id,
-        postId: savedPost._id,
-        message: `${user.firstName} ${user.lastName} just posted a new update.`,
-      }));
-      await Notification.insertMany(notifications);
-    }
+    // Optionally, create notifications for friends here.
+    // ...
 
-    // Fetch all posts in descending order
+    // Fetch all posts in descending order (or return just the created post)
     const posts = await Post.find().sort({ createdAt: -1 });
     res.status(201).json(posts);
   } catch (err) {
@@ -75,6 +85,7 @@ export const createPost = async (req, res) => {
     res.status(500).json({ message: "Something went wrong, please try again later." });
   }
 };
+
 
 
 
@@ -125,7 +136,7 @@ export const getFeedPosts = async (req, res) => {
       // Populate location from the Venue model (adjust the fields as needed)
       .populate("location", "name capacity address");
 
-    console.log(posts);
+    
     res.status(200).json(posts);
     
   } catch (err) {

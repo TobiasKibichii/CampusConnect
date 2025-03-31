@@ -1,5 +1,4 @@
 import WidgetWrapper from "components/WidgetWrapper";
-
 import {
   EditOutlined,
   DeleteOutlined,
@@ -20,6 +19,8 @@ import {
   useMediaQuery,
   Select,
   MenuItem,
+  TextField,
+  Autocomplete,
 } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Dropzone from "react-dropzone";
@@ -35,7 +36,9 @@ const MyPostWidget = ({ picturePath }) => {
   const [post, setPost] = useState("");
   const [postType, setPostType] = useState("post");
   const [eventDate, setEventDate] = useState("");
-  const [selectedVenue, setSelectedVenue] = useState("");
+  const [eventTimeFrom, setEventTimeFrom] = useState("");
+  const [eventTimeTo, setEventTimeTo] = useState("");
+  const [selectedVenue, setSelectedVenue] = useState(null);
   const [venues, setVenues] = useState([]);
   const [message, setMessage] = useState("");
 
@@ -54,7 +57,7 @@ const MyPostWidget = ({ picturePath }) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          // data.venues should be an array of venue objects
+          // data.venues should be an array of venue objects with an "available" flag
           setVenues(data.venues);
         })
         .catch((err) => console.error("Error fetching venues:", err));
@@ -69,8 +72,19 @@ const MyPostWidget = ({ picturePath }) => {
 
     if (postType === "event") {
       formData.append("eventDate", eventDate);
-      // Save the selected venue's ID as the location (Option 1)
-      formData.append("location", selectedVenue);
+
+      // Combine eventDate with time strings to create full ISO date strings.
+      // For example, if eventDate is "2025-03-30" and eventTimeFrom is "09:51",
+      // then new Date("2025-03-30T09:51:00") creates a proper Date object.
+      const eventFromDate = new Date(`${eventDate}T${eventTimeFrom}:00`);
+      const eventToDate = new Date(`${eventDate}T${eventTimeTo}:00`);
+
+      // Append as ISO strings so that the backend can correctly cast them to dates.
+      formData.append("eventTimeFrom", eventFromDate.toISOString());
+      formData.append("eventTimeTo", eventToDate.toISOString());
+
+      // Save the selected venue's ID as the location field.
+      formData.append("location", selectedVenue ? selectedVenue._id : "");
     }
 
     if (image) {
@@ -78,6 +92,7 @@ const MyPostWidget = ({ picturePath }) => {
       formData.append("picturePath", image.name);
     }
 
+    // Create post
     const response = await fetch(`http://localhost:6001/posts/p`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -86,10 +101,34 @@ const MyPostWidget = ({ picturePath }) => {
 
     const posts = await response.json();
     dispatch(setPosts(posts));
+
+    // If event post, update the venue status on the backend.
+    // Ensure you have a corresponding PATCH endpoint at /venues/updateStatus/:venueId.
+    if (postType === "event" && selectedVenue) {
+      const patchResponse = await fetch(
+        `http://localhost:6001/venues/updateStatus/${selectedVenue._id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ available: false }),
+        }
+      );
+
+      if (!patchResponse.ok) {
+        console.error("Error updating venue status");
+      }
+    }
+
+    // Reset form states
     setImage(null);
     setPost("");
     setEventDate("");
-    setSelectedVenue("");
+    setEventTimeFrom("");
+    setEventTimeTo("");
+    setSelectedVenue(null);
     setPostType("post");
   };
 
@@ -110,7 +149,6 @@ const MyPostWidget = ({ picturePath }) => {
         />
       </FlexBetween>
 
-      {/* Allow Editors & Admins to Choose Post Type */}
       {(role === "editor" || role === "admin") && (
         <Select
           value={postType}
@@ -122,31 +160,63 @@ const MyPostWidget = ({ picturePath }) => {
         </Select>
       )}
 
-      {/* Event Fields (Only Show if Event is Selected) */}
       {postType === "event" && (
         <Box mt={2}>
           <InputBase
             type="date"
             value={eventDate}
             onChange={(e) => setEventDate(e.target.value)}
-            sx={{ width: "100%", mb: 2, p: 1, border: `1px solid ${medium}` }}
+            sx={{ width: "100%", mb: 1, p: 1, border: `1px solid ${medium}` }}
           />
-          <Select
+          <Box display="flex" gap="1rem" mb="1rem">
+            <TextField
+              type="time"
+              label="Start Time"
+              value={eventTimeFrom}
+              onChange={(e) => setEventTimeFrom(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, border: `1px solid ${medium}` }}
+            />
+            <TextField
+              type="time"
+              label="End Time"
+              value={eventTimeTo}
+              onChange={(e) => setEventTimeTo(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1, border: `1px solid ${medium}` }}
+            />
+          </Box>
+          <Autocomplete
+            options={venues}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, value) => option._id === value._id}
+            onChange={(event, newValue) => {
+              setSelectedVenue(newValue);
+            }}
             value={selectedVenue}
-            onChange={(e) => setSelectedVenue(e.target.value)}
-            displayEmpty
-            required
-            sx={{ width: "100%", p: 1, border: `1px solid ${medium}` }}
-          >
-            <MenuItem value="">
-              <em>Select Venue</em>
-            </MenuItem>
-            {venues.map((venue) => (
-              <MenuItem key={venue._id} value={venue._id}>
-                {venue.name} (Capacity: {venue.capacity})
-              </MenuItem>
-            ))}
-          </Select>
+            renderOption={(props, option) => (
+              <li
+                {...props}
+                style={{
+                  backgroundColor: option.available
+                    ? palette.success.light
+                    : palette.neutral.light,
+                  color: option.available ? "inherit" : "gray",
+                }}
+                disabled={!option.available}
+              >
+                {option.name} (Capacity: {option.capacity})
+              </li>
+            )}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Select Venue"
+                variant="outlined"
+                fullWidth
+              />
+            )}
+          />
         </Box>
       )}
 
@@ -214,12 +284,10 @@ const MyPostWidget = ({ picturePath }) => {
               <GifBoxOutlined sx={{ color: mediumMain }} />
               <Typography color={mediumMain}>Clip</Typography>
             </FlexBetween>
-
             <FlexBetween gap="0.25rem">
               <AttachFileOutlined sx={{ color: mediumMain }} />
               <Typography color={mediumMain}>Attachment</Typography>
             </FlexBetween>
-
             <FlexBetween gap="0.25rem">
               <MicOutlined sx={{ color: mediumMain }} />
               <Typography color={mediumMain}>Audio</Typography>
