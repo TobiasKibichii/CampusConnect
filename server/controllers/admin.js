@@ -12,6 +12,22 @@ export const getAllUsers = async (req, res) => {
 };
 
 
+export const editUser =   async (req, res) => {
+  try {
+    const { userId, ...updateData } = req.body;
+    if (!userId) return res.status(400).json({ message: "User ID is required." });
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 
 export const deleteUser = async (req, res) => {

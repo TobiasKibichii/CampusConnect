@@ -23,12 +23,10 @@ import {
   Alert,
 } from "@mui/material";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 
 const UserManagement = () => {
   const currentUser = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
-  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,6 +38,14 @@ const UserManagement = () => {
   // States for deletion confirmation dialog
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
+
+  // States for edit dialog
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState("");
 
   // States for snackbar notifications
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -111,15 +117,64 @@ const UserManagement = () => {
       });
   };
 
+  // Open the edit dialog and pre-fill the selected user's details
+  const handleEditClick = (user) => {
+    setSelectedUser(user);
+    setEditFirstName(user.firstName);
+    setEditLastName(user.lastName);
+    setEditEmail(user.email);
+    setEditRole(user.role);
+    setOpenEditDialog(true);
+  };
+
+  // Confirm user update by calling the PATCH endpoint
+  const confirmEditUser = () => {
+    fetch(`http://localhost:6001/admin/users/${selectedUser._id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        userId: selectedUser._id,
+        firstName: editFirstName,
+        lastName: editLastName,
+        email: editEmail,
+        role: editRole,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to update user");
+        }
+        return res.json();
+      })
+      .then((updatedUser) => {
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user._id === updatedUser._id ? updatedUser : user
+          )
+        );
+        setSnackbarMessage("User updated successfully");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
+      })
+      .catch((err) => {
+        console.error("Edit error:", err);
+        setSnackbarMessage("Failed to update user");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      })
+      .finally(() => {
+        setOpenEditDialog(false);
+        setSelectedUser(null);
+      });
+  };
+
   // Cancel deletion
   const cancelDelete = () => {
     setOpenDeleteDialog(false);
     setSelectedUserId(null);
-  };
-
-  // Navigate to edit page for a user
-  const handleEditUser = (userId) => {
-    navigate(`http://localhost:6001/admin/users/${selectedUserId}`);
   };
 
   // Compute filtered users based on search query and role filter
@@ -168,6 +223,7 @@ const UserManagement = () => {
         </FormControl>
       </Box>
 
+      {/* Users Table */}
       <TableContainer component={Paper}>
         <Table aria-label="users table">
           <TableHead>
@@ -192,7 +248,7 @@ const UserManagement = () => {
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => handleEditUser(user._id)}
+                    onClick={() => handleEditClick(user)}
                     sx={{ mr: 1 }}
                   >
                     Edit
@@ -218,7 +274,7 @@ const UserManagement = () => {
         </Table>
       </TableContainer>
 
-      {/* Confirmation Dialog for Deletion */}
+      {/* Delete Confirmation Dialog */}
       <Dialog open={openDeleteDialog} onClose={cancelDelete}>
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
@@ -233,6 +289,57 @@ const UserManagement = () => {
           </Button>
           <Button onClick={confirmDeleteUser} color="secondary">
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
+        <DialogTitle>Edit User</DialogTitle>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap="1rem" mt={1}>
+            <TextField
+              label="First Name"
+              variant="outlined"
+              value={editFirstName}
+              onChange={(e) => setEditFirstName(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Last Name"
+              variant="outlined"
+              value={editLastName}
+              onChange={(e) => setEditLastName(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Email"
+              variant="outlined"
+              value={editEmail}
+              onChange={(e) => setEditEmail(e.target.value)}
+              fullWidth
+            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="edit-role-label">Role</InputLabel>
+              <Select
+                labelId="edit-role-label"
+                label="Role"
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value)}
+              >
+                <MenuItem value="user">User</MenuItem>
+                <MenuItem value="editor">Editor</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmEditUser} color="secondary">
+            Save
           </Button>
         </DialogActions>
       </Dialog>

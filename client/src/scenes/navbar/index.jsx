@@ -56,7 +56,10 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [open, setOpen] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
+
+  // Separate state for message notifications and general notifications
+  const [messageNotificationCount, setMessageNotificationCount] = useState(0);
+  const [notificationsCount, setNotificationsCount] = useState(0);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -121,7 +124,27 @@ const Navbar = () => {
     }
   };
 
-  // Fetch notifications count from the backend (this may be for both messages and other notifications)
+
+  const markAsRead = () => {
+    console.log("yyyyyyyyyyyyyyyy")
+    axios
+      .put(
+        "http://localhost:6001/notifications/markAsRead",
+        {}, // Empty body
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      .then(() => {
+        setNotificationsCount(0); // Reset unread count
+      })
+      .catch((err) => {
+        console.error("Error marking notifications as read:", err);
+      });
+  };
+
+
+  // Fetch general notifications count from the backend
   useEffect(() => {
     if (token) {
       axios
@@ -130,10 +153,27 @@ const Navbar = () => {
         })
         .then((response) => {
           // Assuming response.data is an array of notifications
-          setNotificationCount(response.data.length);
+          setNotificationsCount(response.data.length);
         })
         .catch((err) => {
           console.error("Error fetching notifications:", err);
+        });
+    }
+  }, [token]);
+
+  // Fetch message notifications count from the backend
+  useEffect(() => {
+    if (token) {
+      axios
+        .get("http://localhost:6001/messageNotifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          // Assuming response.data is an array of message notifications
+          setMessageNotificationCount(response.data.length);
+        })
+        .catch((err) => {
+          console.error("Error fetching message notifications:", err);
         });
     }
   }, [token]);
@@ -245,14 +285,24 @@ const Navbar = () => {
               <LightMode sx={{ color: dark, fontSize: "25px" }} />
             )}
           </IconButton>
-          {/* Message Icon with Badge */}
-          <IconButton onClick={() => navigate("/messages")}>
-            <Badge badgeContent={notificationCount} color="error">
+          {/* Message Icon with its own Badge */}
+          <IconButton
+            onClick={() => {
+              // Clear message notifications and navigate to messages page
+              setMessageNotificationCount(0);
+              navigate("/messages");
+            }}
+          >
+            <Badge badgeContent={messageNotificationCount} color="error">
               <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
             </Badge>
           </IconButton>
-          <IconButton onClick={() => navigate("/notifications")}>
-            <Badge badgeContent={notificationCount} color="error">
+          {/* General Notifications Icon with separate Badge */}
+          <IconButton onClick={() => {
+              markAsRead();
+              navigate("/notifications");
+             }}>
+            <Badge badgeContent={notificationsCount} color="error">
               <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
             </Badge>
           </IconButton>
@@ -357,13 +407,18 @@ const Navbar = () => {
               )}
             </IconButton>
             {/* Message Icon with Badge for Mobile */}
-            <IconButton onClick={() => navigate("/messages")}>
-              <Badge badgeContent={notificationCount} color="error">
+            <IconButton
+              onClick={() => {
+                setMessageNotificationCount(0);
+                navigate("/messages");
+              }}
+            >
+              <Badge badgeContent={messageNotificationCount} color="error">
                 <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
               </Badge>
             </IconButton>
             <IconButton onClick={() => navigate("/notifications")}>
-              <Badge badgeContent={notificationCount} color="error">
+              <Badge badgeContent={notificationsCount} color="error">
                 <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
               </Badge>
             </IconButton>

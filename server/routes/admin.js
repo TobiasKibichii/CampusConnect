@@ -1,10 +1,11 @@
 import express from "express";
-import { getAllUsers, deleteUser, getAllGroups, deleteGroup, getAnalytics, getAllVenues, createVenue } from "../controllers/admin.js";
+import { getAllUsers, editUser, deleteUser, getAllGroups, deleteGroup, getAnalytics, getAllVenues, createVenue } from "../controllers/admin.js";
 import { verifyToken, isAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
 router.get("/users", verifyToken, isAdmin, getAllUsers);
+router.patch("/users/:id", verifyToken, isAdmin, editUser);
 router.delete("/users/:id", verifyToken, isAdmin, deleteUser);
 
 router.get("/groups", verifyToken, isAdmin, getAllGroups);

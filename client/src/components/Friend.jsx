@@ -22,8 +22,9 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const isFriend = friends.find((friend) => friend._id === friendId);
 
   const patchFriend = async () => {
+    console.log(friendId)
     const response = await fetch(
-      `http://localhost:6001/users/${_id}/${friendId}`,
+      `http://localhost:6001/users/${_id}/${friendId._id}`,
       {
         method: "PATCH",
         headers: {
@@ -42,7 +43,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
         <UserImage image={userPicturePath} size="55px" />
         <Box
           onClick={() => {
-            navigate(`/profile/${friendId}`);
+            navigate(`/profile/${friendId._id}`);
             navigate(0);
           }}
         >

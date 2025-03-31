@@ -1,4 +1,3 @@
-// components/MessageNotifications.jsx
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -18,13 +17,17 @@ const MessageNotifications = () => {
   const token = useSelector((state) => state.token);
   const navigate = useNavigate();
 
+  // Fetch notifications from the backend
   const fetchNotifications = async () => {
     try {
-      const response = await fetch("http://localhost:6001/messages/messageNotifications", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        "http://localhost:6001/messages/messageNotifications",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = await response.json();
       setNotifications(data);
     } catch (error) {
@@ -32,8 +35,35 @@ const MessageNotifications = () => {
     }
   };
 
+  // Mark notifications as read and clear the local notifications array
+  const markNotificationsAsRead = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:6001/messageNotifications/markNotificationsRead",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response.data)
+      if (!response.ok) {
+        throw new Error("Failed to mark notifications as read");
+      }
+      // Clear notifications locally (so the count will disappear)
+      setNotifications([]);
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
+  };
+
   useEffect(() => {
-    fetchNotifications();
+    if (token) {
+      fetchNotifications();
+      markNotificationsAsRead();
+    }
   }, [token]);
 
   return (
@@ -55,8 +85,7 @@ const MessageNotifications = () => {
             key={notif._id}
             button
             onClick={() => {
-              // Navigate to the chat section. If you have a conversation id, use that.
-              // Otherwise, navigate using the sender id.
+              // Navigate to the chat section using the sender's ID.
               navigate(`/chat/${notif.sender._id}`);
             }}
           >

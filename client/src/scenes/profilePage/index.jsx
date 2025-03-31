@@ -10,11 +10,21 @@ import UserWidget from "scenes/widgets/UserWidget";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
-  const { userId } = useParams();
+
   const token = useSelector((state) => state.token);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
+const params = useParams();
+const userId =
+  params.userId && typeof params.userId === "object"
+    ? params.userId.userId
+    : params.userId;
+console.log("Final extracted userId:", userId);
+console.log("Final extracted  yyyyy userId:", JSON.stringify(userId));
+
+
 
   const getUser = async () => {
+    console.log(userId +" yyyyyyyy")
     const response = await fetch(`http://localhost:6001/users/${userId}`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },

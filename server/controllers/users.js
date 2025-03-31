@@ -98,6 +98,7 @@ export const updateUserProfile = async (req, res) => {
 export const addRemoveFriend = async (req, res) => {
   try {
     const { id, friendId } = req.params;
+    
 
     // Exit function early if the user is trying to add themselves
     if (id === friendId) return;

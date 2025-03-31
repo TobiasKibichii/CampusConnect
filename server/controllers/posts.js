@@ -5,6 +5,7 @@ import Notification from "../models/Notification.js";
 import Venue from "../models/Venue.js"; 
 
 /* CREATE */
+
 export const createPost = async (req, res) => {
   try {
     console.log(req.body);
@@ -44,7 +45,7 @@ export const createPost = async (req, res) => {
       if (venue) {
         // Store a displayable value (e.g., the venue name)
         locationValue = `${venue.name}`;
-        // Mark the venue as booked
+        // Mark the venue as booked (update available flag)
         venue.available = false;
         await venue.save();
         venueId = venue._id;
@@ -53,7 +54,7 @@ export const createPost = async (req, res) => {
       }
     }
 
-    // Create the post
+    // Create the post with event-specific fields
     const newPost = new Post({
       userId,
       firstName: user.firstName,
@@ -74,8 +75,18 @@ export const createPost = async (req, res) => {
 
     const savedPost = await newPost.save();
 
-    // Optionally, create notifications for friends here.
-    // ...
+    // Create notifications for friends: 
+    // For example, each friend gets a notification that user has posted.
+    if (user.friends && user.friends.length > 0) {
+      // Assuming Notification model has fields: userId (recipient), friendId (poster), postId, message.
+      const notifications = user.friends.map((friendId) => ({
+        userId: friendId,          // The friend who will receive the notification
+        friendId: user._id,        // The user who posted
+        postId: savedPost._id,
+        message: `${user.firstName} ${user.lastName} just posted a new update.`
+      }));
+      await Notification.insertMany(notifications);
+    }
 
     // Fetch all posts in descending order (or return just the created post)
     const posts = await Post.find().sort({ createdAt: -1 });
@@ -85,6 +96,7 @@ export const createPost = async (req, res) => {
     res.status(500).json({ message: "Something went wrong, please try again later." });
   }
 };
+
 
 
 

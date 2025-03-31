@@ -11,6 +11,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
   
   const getUserPosts = useCallback(async () => {
     try {
+      console.log(userId)
       const response = await fetch(
         `http://localhost:6001/posts/user/${userId}`, // Adjust if needed
         {
