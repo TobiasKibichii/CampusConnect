@@ -52,16 +52,15 @@ const PostWidget = ({
   postUserId,
   name,
   description,
-  location, // For event posts, this now contains the venue details (not just an ID)
+  location,
   picturePath,
   userPicturePath,
   likes,
-  comments, // original prop (unused for rendering comments now)
+  comments,
   type,
   eventDate,
-  // Removed eventLocation prop since we are now using location for venue details
   attendees = [],
-  createdAt, // assumed to be passed for the post itself
+  createdAt,
 }) => {
   const [isComments, setIsComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
@@ -77,7 +76,6 @@ const PostWidget = ({
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
-  // Derive saved status from the Redux user state:
   const savedPosts = useSelector((state) => state.user.savedPosts) || [];
   const isSaved = savedPosts
     .map((id) => id.toString())
@@ -91,7 +89,7 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
 
-  // Function to fetch comments from backend
+  // Fetch comments from backend
   const fetchComments = async () => {
     try {
       const response = await fetch(
@@ -116,7 +114,7 @@ const PostWidget = ({
     fetchComments();
   }, [postId, token]);
 
-  // Like Post (unchanged)
+  // Like Post
   const patchLike = async () => {
     const response = await fetch(`http://localhost:6001/posts/${postId}/like`, {
       method: "PATCH",
@@ -130,7 +128,7 @@ const PostWidget = ({
     dispatch(setPost({ post: updatedPost }));
   };
 
-  // Attend Event (unchanged)
+  // Attend Event
   const toggleAttend = async () => {
     const response = await fetch(
       `http://localhost:6001/posts/${postId}/attend`,
@@ -147,7 +145,7 @@ const PostWidget = ({
     dispatch(setPost({ post: updatedPost }));
   };
 
-  // Toggle Save Post/Event using Redux to update the user's saved posts
+  // Toggle Save Post/Event
   const patchSave = async () => {
     try {
       const response = await fetch(`http://localhost:6001/save/${postId}`, {
@@ -159,14 +157,13 @@ const PostWidget = ({
         body: JSON.stringify({ userId: loggedInUserId }),
       });
       const data = await response.json();
-      console.log("Backend savedPosts:", data.savedPosts);
       dispatch(updateSavedPosts(data.savedPosts));
     } catch (error) {
       console.error("Error toggling saved status:", error);
     }
   };
 
-  // Submit a reply (for both top-level replies and nested replies)
+  // Submit a reply (for both top-level and nested replies)
   const submitReply = async (parentComment) => {
     if (!replyText.trim()) return;
     try {
@@ -278,13 +275,11 @@ const PostWidget = ({
   // Handle likes on a comment/reply
   const toggleLike = async (commentId) => {
     try {
-      console.log(`Toggling like for comment: ${commentId}`);
       const response = await axios.patch(
         `http://localhost:6001/comments/${commentId}/like`,
         { userId: loggedInUserId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("Toggle like response:", response.data);
       const updatedLikes = response.data.likes;
       setLikedComments((prev) => ({
         ...prev,
@@ -309,7 +304,7 @@ const PostWidget = ({
       <Box key={comment._id} ml={`${level * 2}rem`} mt="0.5rem">
         <Divider />
         <Box display="flex" alignItems="center" gap="0.5rem">
-          <Avatar src={profileUrl || ""} alt={comment.userId?.firstName} />
+          <Avatar src={profileUrl} alt={comment.userId?.firstName} />
           <Box flex={1}>
             {editingCommentId === comment._id ? (
               <TextField
@@ -441,26 +436,70 @@ const PostWidget = ({
     );
   };
 
+  // Render for event posts vs. normal posts
+  if (type === "event") {
+    // Render an event card that is clickable.
+    return (
+      <Link to={`/events/${postId}`} style={{ textDecoration: "none" }}>
+        <WidgetWrapper m="2rem 0" sx={{ cursor: "pointer" }}>
+          {/* Resized event image */}
+          {picturePath && (
+            <Box
+              component="img"
+              src={`http://localhost:6001/assets/${picturePath}`}
+              alt="event"
+              sx={{
+                width: "100%",
+                maxHeight: "150px",
+                objectFit: "cover",
+                borderRadius: "0.75rem",
+              }}
+            />
+          )}
+          {/* Event details: event name, venue and date */}
+          <Box mt="0.5rem" p="0.5rem">
+            <Typography variant="h6" color={main}>
+              {description}
+            </Typography>
+            <Box display="flex" alignItems="center" mt="0.25rem">
+              <LocationOnOutlined sx={{ color: primary, mr: "0.25rem" }} />
+              <Typography color={main}>{location}</Typography>
+            </Box>
+            <Box display="flex" alignItems="center" mt="0.25rem">
+              <EventOutlined sx={{ color: primary, mr: "0.25rem" }} />
+              <Typography color={main}>
+                {new Date(eventDate).toLocaleDateString()}
+              </Typography>
+            </Box>
+          </Box>
+          {/* Attend button */}
+          <Box mt="0.5rem" display="flex" justifyContent="center">
+            <Button
+              variant="contained"
+              color={isAttending ? "success" : "primary"}
+              startIcon={<EventAvailableOutlined />}
+              onClick={(e) => {
+                e.preventDefault(); // Prevent Link navigation when clicking the button
+                toggleAttend();
+              }}
+            >
+              {isAttending ? "Attending" : "Attend Event"}
+            </Button>
+          </Box>
+        </WidgetWrapper>
+      </Link>
+    );
+  }
+
+  // Normal post rendering
   return (
     <WidgetWrapper m="2rem 0">
       <Friend
         friendId={postUserId}
         name={name}
-        // For event posts, display the venue details from location.
-        subtitle={type === "event" ? location : location}
+        subtitle={location}
         userPicturePath={userPicturePath}
       />
-      {type === "event" && (
-        <Box display="flex" alignItems="center" gap="0.5rem" mt="0.5rem">
-          <EventOutlined sx={{ color: primary }} />
-          <Typography color={main}>
-            {new Date(eventDate).toLocaleDateString()}
-          </Typography>
-          <LocationOnOutlined sx={{ color: primary }} />
-          {/* Display venue details from location field instead of eventLocation */}
-          <Typography color={main}>{location}</Typography>
-        </Box>
-      )}
       <Typography color={main} sx={{ mt: "1rem" }}>
         {description}
       </Typography>
@@ -497,7 +536,6 @@ const PostWidget = ({
             <Typography>{fetchedComments.length}</Typography>
           </FlexBetween>
         </FlexBetween>
-        {/* Save Icon Button */}
         <IconButton onClick={patchSave}>
           {isSaved ? (
             <BookmarkOutlined sx={{ color: primary }} />
@@ -506,22 +544,6 @@ const PostWidget = ({
           )}
         </IconButton>
       </FlexBetween>
-      {type === "event" && (
-        <Box mt="1rem">
-          <Button
-            variant="contained"
-            color={isAttending ? "success" : "primary"}
-            startIcon={<EventAvailableOutlined />}
-            onClick={toggleAttend}
-          >
-            {isAttending ? "Attending" : "Attend Event"}
-          </Button>
-          <Typography sx={{ mt: "0.5rem" }}>
-            {attendees.length}{" "}
-            {attendees.length === 1 ? "person is" : "people are"} attending.
-          </Typography>
-        </Box>
-      )}
       {isComments && (
         <Box mt="1rem">
           <TextField

@@ -195,18 +195,31 @@ const MyPostWidget = ({ picturePath }) => {
               type="time"
               label="Start Time"
               value={eventTimeFrom}
-              onChange={(e) => setEventTimeFrom(e.target.value)}
+              onChange={(e) => {
+                const [hours] = e.target.value.split(":");
+                setEventTimeFrom(`${hours}:00`);
+              }}
               InputLabelProps={{ shrink: true }}
               sx={{ flex: 1, border: `1px solid ${medium}` }}
             />
-            <TextField
-              type="time"
-              label="End Time"
+            <Select
               value={eventTimeTo}
               onChange={(e) => setEventTimeTo(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              displayEmpty
               sx={{ flex: 1, border: `1px solid ${medium}` }}
-            />
+            >
+              <MenuItem value="">Select Duration</MenuItem>
+              {eventTimeFrom &&
+                [1, 2, 3].map((hours) => {
+                  const [startHour] = eventTimeFrom.split(":").map(Number);
+                  const endHour = (startHour + hours) % 24;
+                  return (
+                    <MenuItem key={hours} value={`${endHour}:00`}>
+                      {hours} Hour{hours > 1 ? "s" : ""}
+                    </MenuItem>
+                  );
+                })}
+            </Select>
           </Box>
           <Autocomplete
             options={venues}
@@ -239,7 +252,6 @@ const MyPostWidget = ({ picturePath }) => {
               />
             )}
           />
-          {/* Show booked slots for the selected venue on the chosen date */}
           {selectedVenue && eventDate && bookedSlots.length > 0 && (
             <Box mt={2}>
               <Typography variant="subtitle1" color="textSecondary">
@@ -256,7 +268,10 @@ const MyPostWidget = ({ picturePath }) => {
                         minute: "2-digit",
                       })} - ${new Date(slot.eventTimeTo).toLocaleTimeString(
                         [],
-                        { hour: "2-digit", minute: "2-digit" }
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
                       )}`}
                     />
                   </ListItem>
@@ -315,37 +330,6 @@ const MyPostWidget = ({ picturePath }) => {
       <Divider sx={{ margin: "1.25rem 0" }} />
 
       <FlexBetween>
-        <FlexBetween gap="0.25rem" onClick={() => setIsImage(!isImage)}>
-          <ImageOutlined sx={{ color: mediumMain }} />
-          <Typography
-            color={mediumMain}
-            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
-          >
-            Image
-          </Typography>
-        </FlexBetween>
-
-        {isNonMobileScreens ? (
-          <>
-            <FlexBetween gap="0.25rem">
-              <GifBoxOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Clip</Typography>
-            </FlexBetween>
-            <FlexBetween gap="0.25rem">
-              <AttachFileOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Attachment</Typography>
-            </FlexBetween>
-            <FlexBetween gap="0.25rem">
-              <MicOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Audio</Typography>
-            </FlexBetween>
-          </>
-        ) : (
-          <FlexBetween gap="0.25rem">
-            <MoreHorizOutlined sx={{ color: mediumMain }} />
-          </FlexBetween>
-        )}
-
         <Button
           disabled={!post}
           onClick={handlePost}

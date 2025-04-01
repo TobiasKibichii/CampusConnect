@@ -14,6 +14,7 @@ import GroupWidget from "scenes/widgets/GroupWidget";
 import FriendListWidget from "scenes/widgets/FriendListWidget";
 import SavedPreviewWidget from "scenes/widgets/SavedPreviewWidget"; // New component for saved items preview
 import { useState } from "react";
+import PopularEventsWidget from "scenes/widgets/PopularEventsWidget";
 
 const HomePage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
@@ -36,6 +37,7 @@ const HomePage = () => {
           <UserWidget userId={_id} picturePath={picturePath} />
           {/* New Saved Preview Widget placed below the UserWidget */}
           <SavedPreviewWidget userId={_id} />
+          <PopularEventsWidget />
         </Box>
 
         <Box
