@@ -21,6 +21,9 @@ import {
   MenuItem,
   TextField,
   Autocomplete,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Dropzone from "react-dropzone";
@@ -28,6 +31,7 @@ import UserImage from "components/UserImage";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
+import axios from "axios";
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
@@ -40,6 +44,7 @@ const MyPostWidget = ({ picturePath }) => {
   const [eventTimeTo, setEventTimeTo] = useState("");
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [venues, setVenues] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState([]); // New state for booked slots
   const [message, setMessage] = useState("");
 
   const { palette } = useTheme();
@@ -64,6 +69,30 @@ const MyPostWidget = ({ picturePath }) => {
     }
   }, [postType, token]);
 
+  // When both a date and a venue are selected, fetch the booked slots for that venue on that day
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      if (selectedVenue && eventDate) {
+        try {
+          const response = await axios.get(
+            `http://localhost:6001/venues/${selectedVenue._id}/bookings`,
+            {
+              params: { date: eventDate },
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          // Assuming the endpoint returns an array of booked slots
+          setBookedSlots(response.data);
+        } catch (error) {
+          console.error("Error fetching booked slots:", error);
+        }
+      } else {
+        setBookedSlots([]);
+      }
+    };
+    fetchBookedSlots();
+  }, [selectedVenue, eventDate, token]);
+
   const handlePost = async () => {
     const formData = new FormData();
     formData.append("userId", _id);
@@ -72,17 +101,11 @@ const MyPostWidget = ({ picturePath }) => {
 
     if (postType === "event") {
       formData.append("eventDate", eventDate);
-
       // Combine eventDate with time strings to create full ISO date strings.
-      // For example, if eventDate is "2025-03-30" and eventTimeFrom is "09:51",
-      // then new Date("2025-03-30T09:51:00") creates a proper Date object.
       const eventFromDate = new Date(`${eventDate}T${eventTimeFrom}:00`);
       const eventToDate = new Date(`${eventDate}T${eventTimeTo}:00`);
-
-      // Append as ISO strings so that the backend can correctly cast them to dates.
       formData.append("eventTimeFrom", eventFromDate.toISOString());
       formData.append("eventTimeTo", eventToDate.toISOString());
-
       // Save the selected venue's ID as the location field.
       formData.append("location", selectedVenue ? selectedVenue._id : "");
     }
@@ -103,7 +126,6 @@ const MyPostWidget = ({ picturePath }) => {
     dispatch(setPosts(posts));
 
     // If event post, update the venue status on the backend.
-    // Ensure you have a corresponding PATCH endpoint at /venues/updateStatus/:venueId.
     if (postType === "event" && selectedVenue) {
       const patchResponse = await fetch(
         `http://localhost:6001/venues/updateStatus/${selectedVenue._id}`,
@@ -116,7 +138,6 @@ const MyPostWidget = ({ picturePath }) => {
           body: JSON.stringify({ available: false }),
         }
       );
-
       if (!patchResponse.ok) {
         console.error("Error updating venue status");
       }
@@ -129,6 +150,7 @@ const MyPostWidget = ({ picturePath }) => {
     setEventTimeFrom("");
     setEventTimeTo("");
     setSelectedVenue(null);
+    setBookedSlots([]);
     setPostType("post");
   };
 
@@ -217,6 +239,31 @@ const MyPostWidget = ({ picturePath }) => {
               />
             )}
           />
+          {/* Show booked slots for the selected venue on the chosen date */}
+          {selectedVenue && eventDate && bookedSlots.length > 0 && (
+            <Box mt={2}>
+              <Typography variant="subtitle1" color="textSecondary">
+                Booked Slots for {selectedVenue.name} on {eventDate}:
+              </Typography>
+              <List>
+                {bookedSlots.map((slot, index) => (
+                  <ListItem key={index}>
+                    <ListItemText
+                      primary={`${new Date(
+                        slot.eventTimeFrom
+                      ).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })} - ${new Date(slot.eventTimeTo).toLocaleTimeString(
+                        [],
+                        { hour: "2-digit", minute: "2-digit" }
+                      )}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          )}
         </Box>
       )}
 

@@ -5,56 +5,106 @@ import Notification from "../models/Notification.js";
 import Venue from "../models/Venue.js"; 
 
 /* CREATE */
-
 export const createPost = async (req, res) => {
   try {
-    console.log(req.body);
+    console.log("Request body:", req.body);
     // Frontend sends 'location' as the venueId for events.
     const { 
       userId, 
       description, 
       picturePath, 
       type, 
-      eventDate, 
-      location,    // This is actually the venueId for events
-      eventTimeFrom, 
-      eventTimeTo 
+      eventDate,     // Expecting a date string, e.g. "2025-04-10"
+      location,      // This is the venueId for events
+      eventTimeFrom, // e.g., an ISO string "2025-04-10T05:16:00.000Z"
+      eventTimeTo    // e.g., an ISO string "2025-04-10T06:16:00.000Z"
     } = req.body;
-    
-    console.log("Venue ID from frontend:", location);
     
     if (!userId || !description) {
       return res.status(400).json({ message: "User ID and description are required." });
     }
+    
+    // Enforce booking window: the event date must be exactly one week from now.
+    if (type === "event") {
+  const now = new Date();
+  const oneWeekAhead = new Date(now);
+  oneWeekAhead.setDate(now.getDate() + 7);
 
+  // Compare only the date portion
+  const providedDate = new Date(eventDate);
+  if (providedDate < oneWeekAhead) {
+    return res.status(400).json({ 
+      message: "Event must be scheduled at least one week in advance." 
+    });
+  }
+}
+
+    
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-
+    
     // Check role permissions for creating events
     if (type === "event" && user.role !== "editor" && user.role !== "admin") {
       return res.status(403).json({ message: "Only editors and admins can create events." });
     }
-
-    // For event posts, look up the venue details using the provided venueId (in the 'location' field)
+    
     let locationValue = user.location; // default for regular posts
     let venueId = null;
+    let startDateTime = null;
+    let endDateTime = null;
+    
     if (type === "event") {
+      // Lookup the venue using the provided venueId (passed in the 'location' field)
       const venue = await Venue.findById(location);
       if (venue) {
-        // Store a displayable value (e.g., the venue name)
-        locationValue = `${venue.name}`;
-        // Mark the venue as booked (update available flag)
-        venue.available = false;
-        await venue.save();
+        locationValue = venue.name;
         venueId = venue._id;
       } else {
-        locationValue = "Venue not found";
+        return res.status(404).json({ message: "Venue not found." });
       }
+      
+      // Use the provided ISO strings directly
+      startDateTime = new Date(eventTimeFrom);
+      endDateTime = new Date(eventTimeTo);
+      
+      // Validate that the dates are valid
+      if (isNaN(startDateTime.getTime())) {
+        return res.status(400).json({ message: "Invalid start time." });
+      }
+      if (isNaN(endDateTime.getTime())) {
+        return res.status(400).json({ message: "Invalid end time." });
+      }
+      
+      // Validate business hours: 8 AM to 6 PM based on eventDate
+      const businessStart = new Date(`${eventDate}T08:00:00`);
+      const businessEnd = new Date(`${eventDate}T18:00:00`);
+      if (startDateTime < businessStart || endDateTime > businessEnd) {
+        return res.status(400).json({ message: "Event must be scheduled between 8 AM and 6 PM." });
+      }
+      
+      // Conflict Check:
+      const conflict = await Post.findOne({
+        type: "event",
+        venueId: venueId,
+        eventDate: eventDate,
+        eventTimeFrom: { $lt: endDateTime },
+        eventTimeTo: { $gt: startDateTime }
+      });
+      
+      if (conflict) {
+        return res.status(409).json({
+          message: "The selected venue is already booked for the chosen time slot."
+        });
+      }
+      
+      // Mark the venue as booked (if desired)
+      venue.available = false;
+      await venue.save();
     }
-
-    // Create the post with event-specific fields
+    
+    // Create the post
     const newPost = new Post({
       userId,
       firstName: user.firstName,
@@ -65,29 +115,29 @@ export const createPost = async (req, res) => {
       picturePath,
       type, // "post" or "event"
       eventDate: type === "event" ? eventDate : null,
-      eventTimeFrom: type === "event" ? eventTimeFrom : null,
-      eventTimeTo: type === "event" ? eventTimeTo : null,
+      eventTimeFrom: type === "event" ? startDateTime : null,
+      eventTimeTo: type === "event" ? endDateTime : null,
       venueId: type === "event" ? venueId : null,
       likes: {},
       comments: [],
       attendees: [],
+      status: type === "event" ? "Scheduled" : undefined,
+      processed: false,
     });
-
+    
     const savedPost = await newPost.save();
-
-    // Create notifications for friends: 
-    // For example, each friend gets a notification that user has posted.
+    
+    // Create notifications for friends (if applicable)
     if (user.friends && user.friends.length > 0) {
-      // Assuming Notification model has fields: userId (recipient), friendId (poster), postId, message.
       const notifications = user.friends.map((friendId) => ({
-        userId: friendId,          // The friend who will receive the notification
-        friendId: user._id,        // The user who posted
+        userId: friendId,
+        friendId: user._id,
         postId: savedPost._id,
-        message: `${user.firstName} ${user.lastName} just posted a new update.`
+        message: `${user.firstName} ${user.lastName} just posted a new update.`,
       }));
       await Notification.insertMany(notifications);
     }
-
+    
     // Fetch all posts in descending order (or return just the created post)
     const posts = await Post.find().sort({ createdAt: -1 });
     res.status(201).json(posts);
