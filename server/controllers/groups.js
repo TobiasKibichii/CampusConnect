@@ -106,3 +106,31 @@ export const joinGroup = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const requestJoinGroup = async (req, res) => {
+  try {
+    console.log("wstrfyuio")
+    const { groupId } = req.params;
+    const userId = req.user.id; // Assuming you set req.user from token
+    
+    // Find the group and update its joinRequests
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if user already requested or is a member
+    if (group.joinRequests.includes(userId) || group.members.includes(userId)) {
+      return res.status(400).json({ message: "Already requested or a member" });
+    }
+
+    group.joinRequests.push(userId);
+    await group.save();
+
+    // Optionally, send a notification to the group creator here
+
+    res.status(200).json({ message: "Join request sent", group });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

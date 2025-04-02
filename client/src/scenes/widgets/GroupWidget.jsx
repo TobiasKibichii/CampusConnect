@@ -98,10 +98,11 @@ const GroupWidget = () => {
       });
   };
 
+  // Updated handler: Send join request to group creator
   const handleJoinGroup = async (groupId) => {
     try {
       const response = await fetch(
-        `http://localhost:6001/groups/${groupId}/join`,
+        `http://localhost:6001/groups/${groupId}/requestJoin`,
         {
           method: "POST",
           headers: {
@@ -111,27 +112,23 @@ const GroupWidget = () => {
         }
       );
       if (!response.ok) {
-        throw new Error("Error joining group");
+        throw new Error("Error sending join request");
       }
       const data = await response.json();
 
-      // Update user groups with the joined group
-      setUserGroups((prev) => [...prev, data.group]);
-
-      // Remove the joined group from suggested groups, ensuring string comparisons
+      // Optionally update suggested groups state to reflect that a request has been sent
       setSuggestedGroups((prev) =>
         prev.filter(
           (group) => group._id.toString() !== data.group._id.toString()
         )
       );
 
-      // Navigate to the group's messages section
-      navigate(`/groupMessages/${groupId}/messages`);
+      // Inform the user that a join request has been sent.
+      alert("Join request sent. Please wait for the group creator's approval.");
     } catch (err) {
       console.error("Join group error:", err);
     }
   };
-
 
   // Handler to open group messages section
   const handleOpenGroup = (groupId) => {

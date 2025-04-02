@@ -17,7 +17,9 @@ export const createPost = async (req, res) => {
       eventDate,     // Expecting a date string, e.g. "2025-04-10"
       location,      // This is the venueId for events
       eventTimeFrom, // e.g., an ISO string "2025-04-10T05:16:00.000Z"
-      eventTimeTo    // e.g., an ISO string "2025-04-10T06:16:00.000Z"
+      eventTimeTo,   // e.g., an ISO string "2025-04-10T06:16:00.000Z"
+      about,         // New field for events
+      whatYoullLearn // New field for events
     } = req.body;
     
     if (!userId || !description) {
@@ -26,20 +28,19 @@ export const createPost = async (req, res) => {
     
     // Enforce booking window: the event date must be exactly one week from now.
     if (type === "event") {
-  const now = new Date();
-  const oneWeekAhead = new Date(now);
-  oneWeekAhead.setDate(now.getDate() + 7);
+      const now = new Date();
+      const oneWeekAhead = new Date(now);
+      oneWeekAhead.setDate(now.getDate() + 7);
 
-  // Compare only the date portion
-  const providedDate = new Date(eventDate);
-  if (providedDate < oneWeekAhead) {
-    return res.status(400).json({ 
-      message: "Event must be scheduled at least one week in advance." 
-    });
-  }
-}
+      // Compare only the date portion
+      const providedDate = new Date(eventDate);
+      if (providedDate < oneWeekAhead) {
+        return res.status(400).json({ 
+          message: "Event must be scheduled at least one week in advance." 
+        });
+      }
+    }
 
-    
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -118,6 +119,8 @@ export const createPost = async (req, res) => {
       eventTimeFrom: type === "event" ? startDateTime : null,
       eventTimeTo: type === "event" ? endDateTime : null,
       venueId: type === "event" ? venueId : null,
+      about: type === "event" ? about : null, // Include only for events
+      whatYoullLearn: type === "event" ? whatYoullLearn : null, // Include only for events
       likes: {},
       comments: [],
       attendees: [],
@@ -146,6 +149,7 @@ export const createPost = async (req, res) => {
     res.status(500).json({ message: "Something went wrong, please try again later." });
   }
 };
+
 
 
 

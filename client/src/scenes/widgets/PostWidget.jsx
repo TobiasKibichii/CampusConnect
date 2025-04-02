@@ -114,7 +114,7 @@ const PostWidget = ({
     fetchComments();
   }, [postId, token]);
 
-  // Like Post
+  // Like Post/Event
   const patchLike = async () => {
     const response = await fetch(`http://localhost:6001/posts/${postId}/like`, {
       method: "PATCH",
@@ -438,56 +438,116 @@ const PostWidget = ({
 
   // Render for event posts vs. normal posts
   if (type === "event") {
-    // Render an event card that is clickable.
+    // For events, we now include the profile info similar to posts, then the event card with event details,
+    // and finally a toolbar with Like, Comment, Attend, and Bookmark icons.
     return (
-      <Link to={`/events/${postId}`} style={{ textDecoration: "none" }}>
-        <WidgetWrapper m="2rem 0" sx={{ cursor: "pointer" }}>
-          {/* Resized event image */}
-          {picturePath && (
-            <Box
-              component="img"
-              src={`http://localhost:6001/assets/${picturePath}`}
-              alt="event"
-              sx={{
-                width: "100%",
-                maxHeight: "150px",
-                objectFit: "cover",
-                borderRadius: "0.75rem",
-              }}
-            />
-          )}
-          {/* Event details: event name, venue and date */}
-          <Box mt="0.5rem" p="0.5rem">
-            <Typography variant="h6" color={main}>
-              {description}
-            </Typography>
-            <Box display="flex" alignItems="center" mt="0.25rem">
-              <LocationOnOutlined sx={{ color: primary, mr: "0.25rem" }} />
-              <Typography color={main}>{location}</Typography>
-            </Box>
-            <Box display="flex" alignItems="center" mt="0.25rem">
-              <EventOutlined sx={{ color: primary, mr: "0.25rem" }} />
-              <Typography color={main}>
-                {new Date(eventDate).toLocaleDateString()}
+      <WidgetWrapper m="2rem 0">
+        {/* Profile section */}
+        <Friend
+          friendId={postUserId}
+          name={name}
+          subtitle={location}
+          userPicturePath={userPicturePath}
+        />
+        <Link
+          to={`/events/${postId}`}
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
+          <Box sx={{ cursor: "pointer", mt: "0.5rem" }}>
+            {/* Resized event image */}
+            {picturePath && (
+              <Box
+                component="img"
+                src={`http://localhost:6001/assets/${picturePath}`}
+                alt="event"
+                sx={{
+                  width: "100%",
+                  maxHeight: "150px",
+                  objectFit: "cover",
+                  borderRadius: "0.75rem",
+                }}
+              />
+            )}
+            {/* Event details: event name, venue and date */}
+            <Box mt="0.5rem" p="0.5rem">
+              <Typography variant="h6" color={main}>
+                {description}
               </Typography>
+              <Box display="flex" alignItems="center" mt="0.25rem">
+                <LocationOnOutlined sx={{ color: primary, mr: "0.25rem" }} />
+                <Typography color={main}>{location}</Typography>
+              </Box>
+              <Box display="flex" alignItems="center" mt="0.25rem">
+                <EventOutlined sx={{ color: primary, mr: "0.25rem" }} />
+                <Typography color={main}>
+                  {new Date(eventDate).toLocaleDateString()}
+                </Typography>
+              </Box>
             </Box>
           </Box>
-          {/* Attend button */}
-          <Box mt="0.5rem" display="flex" justifyContent="center">
+        </Link>
+        {/* Toolbar for events */}
+        <FlexBetween mt="0.25rem">
+          <FlexBetween gap="1rem">
+            <FlexBetween gap="0.3rem">
+              <IconButton onClick={patchLike}>
+                {isLiked ? (
+                  <FavoriteOutlined sx={{ color: primary }} />
+                ) : (
+                  <FavoriteBorderOutlined />
+                )}
+              </IconButton>
+              <Typography>{likeCount}</Typography>
+            </FlexBetween>
+            <FlexBetween gap="0.3rem">
+              <IconButton onClick={() => setIsComments(!isComments)}>
+                <ChatBubbleOutlineOutlined />
+              </IconButton>
+              <Typography>{fetchedComments.length}</Typography>
+            </FlexBetween>
             <Button
               variant="contained"
               color={isAttending ? "success" : "primary"}
               startIcon={<EventAvailableOutlined />}
               onClick={(e) => {
-                e.preventDefault(); // Prevent Link navigation when clicking the button
+                e.stopPropagation();
                 toggleAttend();
               }}
             >
               {isAttending ? "Attending" : "Attend Event"}
             </Button>
+          </FlexBetween>
+          <IconButton onClick={patchSave}>
+            {isSaved ? (
+              <BookmarkOutlined sx={{ color: primary }} />
+            ) : (
+              <BookmarkBorderOutlined />
+            )}
+          </IconButton>
+        </FlexBetween>
+        {isComments && (
+          <Box mt="1rem">
+            <TextField
+              fullWidth
+              placeholder="Add a comment..."
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
+            />
+            <Button onClick={submitNewComment} size="small">
+              Send
+            </Button>
           </Box>
-        </WidgetWrapper>
-      </Link>
+        )}
+        {isComments && fetchedComments?.length > 0 ? (
+          fetchedComments
+            .filter((comment) => !comment.parentCommentId)
+            .map((comment) => renderComment(comment))
+        ) : isComments ? (
+          <Typography sx={{ color: main, pl: "1rem" }}>
+            No comments yet.
+          </Typography>
+        ) : null}
+      </WidgetWrapper>
     );
   }
 

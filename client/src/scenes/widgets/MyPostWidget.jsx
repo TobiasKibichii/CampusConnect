@@ -2,11 +2,7 @@ import WidgetWrapper from "components/WidgetWrapper";
 import {
   EditOutlined,
   DeleteOutlined,
-  AttachFileOutlined,
-  GifBoxOutlined,
   ImageOutlined,
-  MicOutlined,
-  MoreHorizOutlined,
 } from "@mui/icons-material";
 import {
   Box,
@@ -32,19 +28,28 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isImage, setIsImage] = useState(false);
   const [image, setImage] = useState(null);
+  // We now only use 'post' as description for regular posts.
   const [post, setPost] = useState("");
   const [postType, setPostType] = useState("post");
+
+  // New states for event extra fields
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventAbout, setEventAbout] = useState("");
+  const [eventLearn, setEventLearn] = useState("");
+
   const [eventDate, setEventDate] = useState("");
   const [eventTimeFrom, setEventTimeFrom] = useState("");
   const [eventTimeTo, setEventTimeTo] = useState("");
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [venues, setVenues] = useState([]);
-  const [bookedSlots, setBookedSlots] = useState([]); // New state for booked slots
+  const [bookedSlots, setBookedSlots] = useState([]);
   const [message, setMessage] = useState("");
 
   const { palette } = useTheme();
@@ -62,7 +67,6 @@ const MyPostWidget = ({ picturePath }) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          // data.venues should be an array of venue objects with an "available" flag
           setVenues(data.venues);
         })
         .catch((err) => console.error("Error fetching venues:", err));
@@ -81,7 +85,6 @@ const MyPostWidget = ({ picturePath }) => {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
-          // Assuming the endpoint returns an array of booked slots
           setBookedSlots(response.data);
         } catch (error) {
           console.error("Error fetching booked slots:", error);
@@ -96,10 +99,17 @@ const MyPostWidget = ({ picturePath }) => {
   const handlePost = async () => {
     const formData = new FormData();
     formData.append("userId", _id);
-    formData.append("description", post);
     formData.append("type", postType);
 
-    if (postType === "event") {
+    // For posts, use the 'post' state as description.
+    // For events, use eventTitle as the description (title replaces description)
+    if (postType === "post") {
+      formData.append("description", post);
+    } else if (postType === "event") {
+      formData.append("description", eventTitle);
+      // Append extra event fields
+      formData.append("eventAbout", eventAbout);
+      formData.append("eventLearn", eventLearn);
       formData.append("eventDate", eventDate);
       // Combine eventDate with time strings to create full ISO date strings.
       const eventFromDate = new Date(`${eventDate}T${eventTimeFrom}:00`);
@@ -111,11 +121,10 @@ const MyPostWidget = ({ picturePath }) => {
     }
 
     if (image) {
-      formData.append("picture", image);
       formData.append("picturePath", image.name);
     }
 
-    // Create post
+    // Create post/event
     const response = await fetch(`http://localhost:6001/posts/p`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -146,30 +155,40 @@ const MyPostWidget = ({ picturePath }) => {
     // Reset form states
     setImage(null);
     setPost("");
+    setEventTitle("");
+    setEventAbout("");
+    setEventLearn("");
     setEventDate("");
     setEventTimeFrom("");
     setEventTimeTo("");
     setSelectedVenue(null);
     setBookedSlots([]);
     setPostType("post");
+    setIsImage(false);
+
+    // Navigate to the section where all info is displayed
+    navigate("/displayPosts");
   };
 
   return (
     <WidgetWrapper>
-      <FlexBetween gap="1.5rem">
-        <UserImage image={picturePath} />
-        <InputBase
-          placeholder="What's on your mind..."
-          onChange={(e) => setPost(e.target.value)}
-          value={post}
-          sx={{
-            width: "100%",
-            backgroundColor: palette.neutral.light,
-            borderRadius: "2rem",
-            padding: "1rem 2rem",
-          }}
-        />
-      </FlexBetween>
+      {/* Render the description input only if creating a regular post */}
+      {postType === "post" && (
+        <FlexBetween gap="1.5rem">
+          <UserImage image={picturePath} />
+          <InputBase
+            placeholder="What's on your mind..."
+            onChange={(e) => setPost(e.target.value)}
+            value={post}
+            sx={{
+              width: "100%",
+              backgroundColor: palette.neutral.light,
+              borderRadius: "2rem",
+              padding: "1rem 2rem",
+            }}
+          />
+        </FlexBetween>
+      )}
 
       {(role === "editor" || role === "admin") && (
         <Select
@@ -182,8 +201,43 @@ const MyPostWidget = ({ picturePath }) => {
         </Select>
       )}
 
+      {/* When creating an event, display the extra event fields */}
       {postType === "event" && (
         <Box mt={2}>
+          <TextField
+            label="Title"
+            placeholder="Event Title"
+            value={eventTitle}
+            onChange={(e) => setEventTitle(e.target.value)}
+            inputProps={{ maxLength: 50 }}
+            fullWidth
+            variant="outlined"
+            sx={{ mb: 1 }}
+          />
+          <TextField
+            label="About"
+            placeholder="About the event"
+            value={eventAbout}
+            onChange={(e) => setEventAbout(e.target.value)}
+            inputProps={{ maxLength: 200 }}
+            fullWidth
+            variant="outlined"
+            sx={{ mb: 1 }}
+            multiline
+            rows={3}
+          />
+          <TextField
+            label="What You'll Learn"
+            placeholder="What you'll learn"
+            value={eventLearn}
+            onChange={(e) => setEventLearn(e.target.value)}
+            inputProps={{ maxLength: 500 }}
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={5}
+            sx={{ mb: 2 }}
+          />
           <InputBase
             type="date"
             value={eventDate}
@@ -282,6 +336,13 @@ const MyPostWidget = ({ picturePath }) => {
         </Box>
       )}
 
+      <FlexBetween gap="0.5rem" mt="1rem">
+        <IconButton onClick={() => setIsImage(!isImage)}>
+          <ImageOutlined />
+        </IconButton>
+        <Typography>{isImage ? "Remove Image" : "Add an Image"}</Typography>
+      </FlexBetween>
+
       {isImage && (
         <Box
           border={`1px solid ${medium}`}
@@ -331,7 +392,7 @@ const MyPostWidget = ({ picturePath }) => {
 
       <FlexBetween>
         <Button
-          disabled={!post}
+          disabled={postType === "post" ? !post : !eventTitle}
           onClick={handlePost}
           sx={{
             color: palette.background.alt,

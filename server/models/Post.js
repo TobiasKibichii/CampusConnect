@@ -20,6 +20,7 @@ const postSchema = new mongoose.Schema(
     location: { 
       type: String 
     },
+    // This field remains as the title.
     description: { 
       type: String 
     },
@@ -43,6 +44,13 @@ const postSchema = new mongoose.Schema(
     },
     eventTimeTo: { 
       type: Date 
+    },
+    // New fields for events:
+    about: { 
+      type: String 
+    },
+    whatYoullLearn: { 
+      type: String 
     },
     // Store the raw venue ID as a reference to the Venue model
     venueId: { 

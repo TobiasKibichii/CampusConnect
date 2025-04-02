@@ -12,6 +12,7 @@ import Notifications from "scenes/notifications";
 import ChatSection from "scenes/chat";
 import FollowEditorsPage from "scenes/loginPage/followEditors";
 import MessageNotifications from "scenes/MessageNotifications";
+import DisplayPosts from "scenes/displayPage";
 
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
@@ -77,6 +78,8 @@ function App() {
             />
             <Route path="/follow-editors" element={<FollowEditorsPage />} />
             <Route path="/messages" element={<MessageNotifications />} />
+            <Route path="/events/:postId" element={<DisplayPosts />} />
+            <Route path="/posts/:postId" element={<DisplayPosts />} />
           </Routes>
         </ThemeProvider>
       </BrowserRouter>

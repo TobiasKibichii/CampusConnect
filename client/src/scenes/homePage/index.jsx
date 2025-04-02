@@ -15,6 +15,7 @@ import FriendListWidget from "scenes/widgets/FriendListWidget";
 import SavedPreviewWidget from "scenes/widgets/SavedPreviewWidget"; // New component for saved items preview
 import { useState } from "react";
 import PopularEventsWidget from "scenes/widgets/PopularEventsWidget";
+import DisplayPage from "scenes/displayPage";
 
 const HomePage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
@@ -60,6 +61,7 @@ const HomePage = () => {
 
           {/* Pass Filter Option to PostsWidget */}
           <PostsWidget userId={_id} filter={postFilter} />
+         
         </Box>
 
         {isNonMobileScreens && (
