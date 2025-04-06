@@ -10,6 +10,8 @@ import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
 import cron from "node-cron";
+import { sendEmail } from "./utils/mailer.js";
+
 
 // Import your routes
 import authRoutes from "./routes/auth.js";
@@ -190,6 +192,90 @@ cron.schedule("* * * * *", async () => {
 // -----------------------
 // End Scheduler
 // -----------------------
+
+// Add to routes or directly in your main server file
+
+import User from "./models/User.js";
+
+app.get("/test-email",  async (req, res) => {
+  try {
+    const testUserId = new mongoose.Types.ObjectId("67f2ac615cfdcb59a0d6350a");
+
+    const testUser = await User.findById(testUserId);
+
+    if (!testUser || !testUser.email) {
+      return res.status(404).send("Test user not found or has no email");
+    }
+
+    const emailBody = `
+      <h3>Hello ${testUser.firstName} 👋,</h3>
+      <p>This is a test reminder email from <strong>Campus Connect</strong>.</p>
+      <p>If you're seeing this, your mail system works perfectly! ✅</p>
+      <br/>
+      <p>Best,<br/>Campus Connect Team</p>
+    `;
+
+    await sendEmail("kibichiitoby314@gmail.com", "📅 Test Email from CampusConnect", emailBody);
+
+    res.send("✅ Test email sent to you successfully!");
+  } catch (err) {
+    console.error("❌ Error sending test email:", err);
+    res.status(500).send("Failed to send test email.");
+  }
+});
+
+
+
+cron.schedule("0 7 * * *", async () => {
+  try {
+    console.log("Running daily event notification job...");
+
+    // Define today's start and end boundaries
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Query for events scheduled for today (adjust the query if needed)
+    const events = await Post.find({
+      type: "event",
+      eventDate: { $gte: todayStart, $lte: todayEnd },
+    }).lean();
+
+    console.log(`Found ${events.length} event(s) scheduled for today`);
+
+    // Loop through each event
+    for (const event of events) {
+      // Only proceed if there are registered attendees
+      if (event.attendees && event.attendees.length > 0) {
+        for (const attendeeId of event.attendees) {
+          // Fetch the attendee's email from the User model
+          const user = await User.findById(attendeeId).lean();
+          if (user && user.email) {
+            // Customize the email subject and body as needed
+            const subject = `Reminder: ${event.description} is happening today!`;
+            const html = `
+              <p>Hi ${user.firstName},</p>
+              <p>This is a reminder that the event <strong>${event.description}</strong> is scheduled for today at ${event.location}.</p>
+              <p>Please check your event details and be on time.</p>
+              <p>Thank you,</p>
+              <p>Your App Team</p>
+            `;
+            await sendEmail(user.email, subject, html);
+            console.log(`Email sent to ${user.email} for event ${event._id}`);
+          } else {
+            console.warn(`No email found for attendee: ${attendeeId}`);
+          }
+        }
+      }
+    }
+    console.log("Daily event notification job completed.");
+  } catch (error) {
+    console.error("Error in daily event notification job:", error);
+  }
+});
+
+
 
 export { io };
 

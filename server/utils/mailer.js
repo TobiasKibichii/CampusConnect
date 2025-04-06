@@ -27,3 +27,4 @@ export const sendEmail = async (to, subject, html) => {
 
   return transporter.sendMail(mailOptions);
 };
+

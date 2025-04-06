@@ -24,6 +24,7 @@ const GroupWidget = () => {
   const currentUser = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
   const navigate = useNavigate();
+  // Create a single socket instance – you may also want to extract this into a separate file
   const socket = io("http://localhost:6001");
 
   // States for user's groups, suggested groups, loading state, input and errors
@@ -53,7 +54,7 @@ const GroupWidget = () => {
     return () => {
       socket.off("groupJoinRequest");
     };
-  }, [currentUser]);
+  }, [currentUser, socket]);
 
   // Fetch groups data from backend on mount
   useEffect(() => {
@@ -102,7 +103,7 @@ const GroupWidget = () => {
       .then((data) => {
         // Assume response contains the created group under "group"
         setUserGroups((prev) => [...prev, data.group]);
-        // Remove the new group from suggestions if present (using string conversion)
+        // Optionally remove the new group from suggestions if present
         setSuggestedGroups((prev) =>
           prev.filter(
             (group) => group._id.toString() !== data.group._id.toString()
@@ -133,18 +134,12 @@ const GroupWidget = () => {
         throw new Error("Error sending join request");
       }
       const data = await response.json();
-      // Assume the returned data contains the group details including adminId.
-      // Emit socket event for the join request.
-      socket.emit("sendGroupJoinRequest", {
-        requesterId: currentUser._id,
-        adminId: data.group.adminId, // ensure group data has adminId
-        groupId: data.group._id,
-        message: "I would like to join your group.",
-      });
-      // Optionally update suggested groups state to reflect that a request has been sent.
+      // Instead of removing the group from suggested groups, mark it as requested.
       setSuggestedGroups((prev) =>
-        prev.filter(
-          (group) => group._id.toString() !== data.group._id.toString()
+        prev.map((group) =>
+          group._id.toString() === data.group._id.toString()
+            ? { ...group, requested: true }
+            : group
         )
       );
       alert("Join request sent. Please wait for the group creator's approval.");
@@ -153,13 +148,18 @@ const GroupWidget = () => {
     }
   };
 
-  // Handler to open group messages section
+  // Handler to open group messages section; only allow if the user is a member.
   const handleOpenGroup = (groupId) => {
     if (!groupId) {
       console.error("Invalid group ID");
       return;
     }
-    navigate(`/groupMessages/${groupId}/messages`);
+    // Only open if the user is a member.
+    if (isUserInGroup(groupId)) {
+      navigate(`/groupMessages/${groupId}/messages`);
+    } else {
+      alert("You must be a member of this group to view messages.");
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -245,6 +245,10 @@ const GroupWidget = () => {
               {isUserInGroup(group._id) ? (
                 <Button variant="outlined" disabled>
                   Joined
+                </Button>
+              ) : group.requested ? (
+                <Button variant="outlined" disabled>
+                  Requested
                 </Button>
               ) : (
                 <Button

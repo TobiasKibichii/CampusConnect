@@ -89,6 +89,9 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
 
+  // Constant for venue capacity (hard-coded as 500)
+  const venueCapacity = 500;
+
   // Fetch comments from backend
   const fetchComments = async () => {
     try {
@@ -439,7 +442,7 @@ const PostWidget = ({
   // Render for event posts vs. normal posts
   if (type === "event") {
     // For events, we now include the profile info similar to posts, then the event card with event details,
-    // and finally a toolbar with Like, Comment, Attend, and Bookmark icons.
+    // and finally a toolbar with Like, Comment, Attend, capacity/attendees info, and Bookmark icons.
     return (
       <WidgetWrapper m="2rem 0">
         {/* Profile section */}
@@ -459,7 +462,7 @@ const PostWidget = ({
               <Box
                 component="img"
                 src={`http://localhost:6001/assets/${picturePath}`}
-                alt="event"
+                alt={`http://localhost:6001/assets/${picturePath}`}
                 sx={{
                   width: "100%",
                   maxHeight: "150px",
@@ -511,11 +514,22 @@ const PostWidget = ({
               startIcon={<EventAvailableOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
+                // If event is full and user is not attending, do nothing.
+                if (!isAttending && attendees.length >= venueCapacity) return;
                 toggleAttend();
               }}
+              disabled={!isAttending && attendees.length >= venueCapacity}
             >
-              {isAttending ? "Attending" : "Attend Event"}
+              {!isAttending && attendees.length >= venueCapacity
+                ? "Event Full"
+                : isAttending
+                ? "Attending"
+                : "Attend Event"}
             </Button>
+            {/* Capacity/attendees info placed between Attend and Bookmark */}
+            <Typography variant="caption" color={main}>
+              {attendees.length} / {venueCapacity} Attending
+            </Typography>
           </FlexBetween>
           <IconButton onClick={patchSave}>
             {isSaved ? (
