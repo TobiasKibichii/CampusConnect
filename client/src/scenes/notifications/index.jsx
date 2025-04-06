@@ -42,12 +42,36 @@ const NotificationsPage = () => {
     }
     socket.on("newNotification", (notification) => {
       // Prepend the new notification to the list
+      
       setNotifications((prev) => [notification, ...prev]);
     });
     return () => {
       socket.off("newNotification");
     };
   }, [user]);
+
+
+ useEffect(() => {
+   if (user) {
+     console.log("📡 Joining socket room with user ID:", user._id);
+     socket.emit("join", user._id);
+   }
+
+   socket.on("groupJoinApproved", (notification) => {
+     console.log(
+       "📨 Received groupJoinApproved socket notification:",
+       notification
+     );
+     setNotifications((prev) => [notification, ...prev]);
+   });
+
+   return () => {
+     console.log("🧹 Cleaning up socket listener for groupJoinApproved");
+     socket.off("groupJoinApproved");
+   };
+ }, [user]);
+
+
 
   return (
     <Box p="2rem">

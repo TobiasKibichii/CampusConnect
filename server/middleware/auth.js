@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 
 export const verifyToken = async (req, res, next) => {
   try {
+  
     let token = req.header("Authorization");
     console.log("Incoming Authorization header:", token);
 
@@ -21,6 +22,7 @@ export const verifyToken = async (req, res, next) => {
 
     req.user = verified; // Ensure that the decoded token contains an `id` field.
     next();
+    
   } catch (err) {
     console.error("Token verification error:", err);
     res.status(500).json({ error: err.message });

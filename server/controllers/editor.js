@@ -1,5 +1,7 @@
 // controllers/editorController.js
 import Group from "../models/Group.js";
+import { io } from "../index.js";
+
 
 // GET: Retrieve the group that the editor owns (including members and join requests)
 export const getGroup = async (req, res) => {
@@ -42,25 +44,50 @@ export const updateGroup = async (req, res) => {
 export const approveJoinRequest = async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log(`📥 Approving join request for user: ${userId}`);
+
     const group = await Group.findOne({ createdBy: req.user.id });
     if (!group) {
+      console.log("❌ Group not found");
       return res.status(404).json({ message: "Group not found" });
     }
-    // Remove the user from joinRequests if present
+
+    console.log(`✅ Found group: ${group.name}`);
+
+    // Remove from joinRequests
     group.joinRequests = group.joinRequests.filter(
       (reqUserId) => reqUserId.toString() !== userId
     );
-    // Add the user to members if not already a member
+    console.log("🔁 Removed user from joinRequests");
+
+    // Add to members
     if (!group.members.some((memberId) => memberId.toString() === userId)) {
       group.members.push(userId);
+      console.log("👥 Added user to group members");
     }
+
     await group.save();
+    console.log("💾 Group updated");
+
+    // Create notification object
+    const notification = {
+      message: `Your request to join "${group.name}" has been approved.`,
+      type: "group-approval",
+      createdAt: new Date().toISOString(),
+    };
+
+    // Emit socket
+    const io = req.app.get("io");
+    io.to(userId).emit("groupJoinApproved", notification);
+    console.log(`📡 Emitted socket notification to user: ${userId}`);
+
     res.json({ group });
   } catch (error) {
-    console.error("Error approving join request:", error);
+    console.error("🔥 Error approving join request:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // POST: Reject a join request – simply remove the user from joinRequests
 export const rejectJoinRequest = async (req, res) => {

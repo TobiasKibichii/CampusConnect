@@ -281,20 +281,27 @@ export const attendEvent = async (req, res) => {
       return res.status(400).json({ message: "This post is not an event" });
     }
 
-    // Toggle user attendance
-    const isAttending = post.attendees.includes(userId);
+    // Toggle user attendance with proper comparison
+    const isAttending = post.attendees.some(
+      (attendeeId) => attendeeId.toString() === userId
+    );
     if (isAttending) {
-      post.attendees = post.attendees.filter((id) => id !== userId);
+      post.attendees = post.attendees.filter(
+        (id) => id.toString() !== userId
+      );
     } else {
       post.attendees.push(userId);
     }
 
     await post.save();
+    console.log("Updated post attendees:", post.attendees);
     res.status(200).json(post);
   } catch (err) {
+    console.error("Error toggling attendance:", err);
     res.status(500).json({ message: err.message });
   }
 };
+
 
 export const postComments = async (req, res) => {
   try {

@@ -89,16 +89,16 @@ app.set("io", io);
 io.on("connection", (socket) => {
   console.log("A client connected:", socket.id);
 
-  // When a client joins, add them to a room based on their userId
+  // When a client joins, add them to a room based on their userId.
   socket.on("join", (userId) => {
     console.log(`Socket ${socket.id} joining room: ${userId}`);
     socket.join(userId);
   });
 
-  // Listen for sendMessage event for real-time messaging
+  // Listen for sendMessage event for real-time messaging.
   socket.on("sendMessage", async ({ senderId, receiverId, text }) => {
     try {
-      // Create and save the new message
+      // Create and save the new message.
       const newMessage = new Messenger({
         sender: senderId,
         receiver: receiverId,
@@ -106,23 +106,36 @@ io.on("connection", (socket) => {
       });
       await newMessage.save();
 
-      // Create a notification for the receiver
+      // Create a notification for the receiver.
       const newNotification = new MessageNotification({
-        recipient: receiverId, // The recipient of the message
-        sender: senderId,      // The sender of the message
-        message: text.slice(0, 50), // A snippet of the message
+        recipient: receiverId, // The recipient of the message.
+        sender: senderId,      // The sender of the message.
+        message: text.slice(0, 50), // A snippet of the message.
         isRead: false,
       });
       await newNotification.save();
 
-      // Emit the message to the receiver's room
+      // Emit the message to the receiver's room.
       io.to(receiverId).emit("receiveMessage", newMessage);
-      // Optionally, also emit the message back to the sender for confirmation
+      // Optionally, also emit the message back to the sender for confirmation.
       socket.emit("receiveMessage", newMessage);
     } catch (err) {
       console.error("Error sending message:", err);
     }
   });
+
+  // -----------------------
+  // Emitter for group join requests.
+  // When a client wants to request joining a group, they emit "sendGroupJoinRequest"
+  // with details including requesterId, adminId (or room id to notify), groupId, etc.
+  socket.on("sendGroupJoinRequest", (request) => {
+    console.log(
+      `Received group join request from ${request.requesterId} for group ${request.groupId} targeting admin ${request.adminId}`
+    );
+    // Emit the group join request event to the admin's room.
+    io.to(request.adminId).emit("groupJoinRequest", request);
+  });
+  // -----------------------
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
@@ -133,8 +146,8 @@ io.on("connection", (socket) => {
 // Scheduler to update venue availability when an event ends
 // -----------------------
 
-// This scheduler uses the Post model (since events are stored there)
-// It finds event posts that have ended (i.e. eventTo < now), haven't been processed,
+// This scheduler uses the Post model (since events are stored there).
+// It finds event posts that have ended (i.e. eventTimeTo < now), haven't been processed,
 // and have a status of "Scheduled". It then updates the associated venue to available,
 // sets the event status to "Ended", and marks it as processed.
 cron.schedule("* * * * *", async () => {
@@ -142,7 +155,7 @@ cron.schedule("* * * * *", async () => {
     const now = new Date();
     console.log(`Scheduler running at ${now.toLocaleTimeString()}`);
 
-    // Find event posts (stored in Post) that have ended
+    // Find event posts (stored in Post) that have ended.
     const endedEvents = await Post.find({
       type: "event",
       eventTimeTo: { $lt: now },
@@ -161,7 +174,7 @@ cron.schedule("* * * * *", async () => {
       } else {
         console.log(`Event ${event._id} has no venueId.`);
       }
-      // Update the event post
+      // Update the event post.
       event.status = "Ended";
       event.processed = true;
       const updatedEvent = await event.save();
@@ -177,6 +190,8 @@ cron.schedule("* * * * *", async () => {
 // -----------------------
 // End Scheduler
 // -----------------------
+
+export { io };
 
 const PORT = process.env.PORT || 6001;
 mongoose

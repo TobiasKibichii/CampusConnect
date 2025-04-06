@@ -12,6 +12,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
+import io from "socket.io-client"; // Ensure you have a socket instance set up
 
 const GroupWidget = () => {
   const { palette } = useTheme();
@@ -23,6 +24,7 @@ const GroupWidget = () => {
   const currentUser = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
   const navigate = useNavigate();
+  const socket = io("http://localhost:6001");
 
   // States for user's groups, suggested groups, loading state, input and errors
   const [userGroups, setUserGroups] = useState([]);
@@ -30,6 +32,7 @@ const GroupWidget = () => {
   const [loading, setLoading] = useState(true);
   const [groupName, setGroupName] = useState("");
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
   // Helper: check if the user is already a member of a specific group.
   const isUserInGroup = (groupId) => {
@@ -37,6 +40,20 @@ const GroupWidget = () => {
       (group) => group._id.toString() === groupId.toString()
     );
   };
+
+  // Join user room so that they can receive socket notifications
+  useEffect(() => {
+    if (currentUser) {
+      socket.emit("join", currentUser._id);
+    }
+    // Listen for incoming group join requests (if this user is an admin)
+    socket.on("groupJoinRequest", (notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+    });
+    return () => {
+      socket.off("groupJoinRequest");
+    };
+  }, [currentUser]);
 
   // Fetch groups data from backend on mount
   useEffect(() => {
@@ -98,7 +115,8 @@ const GroupWidget = () => {
       });
   };
 
-  // Updated handler: Send join request to group creator
+  // Handler to send join request to a group.
+  // This sends a POST request and then emits a socket event so that the target admin gets notified.
   const handleJoinGroup = async (groupId) => {
     try {
       const response = await fetch(
@@ -115,15 +133,20 @@ const GroupWidget = () => {
         throw new Error("Error sending join request");
       }
       const data = await response.json();
-
-      // Optionally update suggested groups state to reflect that a request has been sent
+      // Assume the returned data contains the group details including adminId.
+      // Emit socket event for the join request.
+      socket.emit("sendGroupJoinRequest", {
+        requesterId: currentUser._id,
+        adminId: data.group.adminId, // ensure group data has adminId
+        groupId: data.group._id,
+        message: "I would like to join your group.",
+      });
+      // Optionally update suggested groups state to reflect that a request has been sent.
       setSuggestedGroups((prev) =>
         prev.filter(
           (group) => group._id.toString() !== data.group._id.toString()
         )
       );
-
-      // Inform the user that a join request has been sent.
       alert("Join request sent. Please wait for the group creator's approval.");
     } catch (err) {
       console.error("Join group error:", err);
@@ -227,7 +250,7 @@ const GroupWidget = () => {
                 <Button
                   variant="outlined"
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering the ListItem click
+                    e.stopPropagation();
                     handleJoinGroup(group._id);
                   }}
                 >

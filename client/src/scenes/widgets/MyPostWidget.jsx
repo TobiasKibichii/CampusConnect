@@ -108,8 +108,8 @@ const MyPostWidget = ({ picturePath }) => {
     } else if (postType === "event") {
       formData.append("description", eventTitle);
       // Append extra event fields
-      formData.append("eventAbout", eventAbout);
-      formData.append("eventLearn", eventLearn);
+      formData.append("about", eventAbout);
+      formData.append("whatYoullLearn", eventLearn);
       formData.append("eventDate", eventDate);
       // Combine eventDate with time strings to create full ISO date strings.
       const eventFromDate = new Date(`${eventDate}T${eventTimeFrom}:00`);
@@ -166,8 +166,7 @@ const MyPostWidget = ({ picturePath }) => {
     setPostType("post");
     setIsImage(false);
 
-    // Navigate to the section where all info is displayed
-    navigate("/displayPosts");
+    
   };
 
   return (

@@ -298,15 +298,33 @@ const Navbar = () => {
             </Badge>
           </IconButton>
           {/* General Notifications Icon with separate Badge */}
-          <IconButton onClick={() => {
+          <IconButton
+            onClick={() => {
               markAsRead();
               navigate("/notifications");
-             }}>
+            }}
+          >
             <Badge badgeContent={notificationsCount} color="error">
               <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
             </Badge>
           </IconButton>
-          <Help sx={{ fontSize: "25px" }} />
+
+          <Button
+            onClick={() => {
+              navigate("/registeredEvents");
+            }}
+            sx={{
+              color: dark,
+              backgroundColor: neutralLight,
+              borderRadius: "0.25rem",
+              textTransform: "none",
+              fontWeight: "bold",
+              padding: "0.5rem 1rem",
+            }}
+          >
+            Registered Events
+          </Button>
+
           {user && user.role === "admin" && (
             <Button
               onClick={() => navigate("/admin")}

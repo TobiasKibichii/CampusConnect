@@ -1,4 +1,6 @@
 import Event from "../models/Event.js";
+import Post from "../models/Post.js";
+import Venue from "../models/Venue.js";
 
 export const createEvent = async (req, res) => {
   const session = await mongoose.startSession();
@@ -39,3 +41,6 @@ export const createEvent = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+
