@@ -115,6 +115,9 @@ const EditorDashboard = () => {
         setSnackbarSeverity("error");
         setSnackbarOpen(true);
       });
+
+
+      
   };
 
   // Reject join request for a user

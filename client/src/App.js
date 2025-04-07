@@ -15,23 +15,40 @@ import MessageNotifications from "scenes/MessageNotifications";
 import DisplayPosts from "scenes/displayPage";
 import RegisteredEvents from "scenes/registeredEvents";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { themeSettings } from "./theme";
-
+import { toast, ToastContainer } from "react-toastify";  
+import "react-toastify/dist/ReactToastify.css";
+import socket from "./socket.js";  // Ensure your socket instance is properly configured
 
 function App() {
   const mode = useSelector((state) => state.mode);
   const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);
   const isAuth = Boolean(useSelector((state) => state.token));
 
+  useEffect(() => {
+    // Listen for the socket event to show notifications
+    socket.on("groupJoinApproved", (notification) => {
+      console.log("📨 Received notification:", notification);
+      toast.success(`Your request to join ${notification.groupName} has been approved!`);
+    });
+
+    // Clean up the socket listener when the component is unmounted
+    return () => {
+      socket.off("groupJoinApproved");
+    };
+  }, []);
+
   return (
     <div className="app">
       <BrowserRouter>
         <ThemeProvider theme={theme}>
           <CssBaseline />
+          {/* Global ToastContainer */}
+          <ToastContainer position="top-right" autoClose={5000} />
           <Routes>
             {/* Public Landing Page */}
             <Route path="/" element={<LandingPage />} />
@@ -75,7 +92,6 @@ function App() {
             <Route
               path="/chat/:userId"
               element={isAuth ? <ChatSection /> : <Navigate to="/login" />}
-    
             />
             <Route path="/follow-editors" element={<FollowEditorsPage />} />
             <Route path="/messages" element={<MessageNotifications />} />

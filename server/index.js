@@ -30,6 +30,7 @@ import messagesRoutes from "./routes/messages.js";
 import venueRoutes from "./routes/venue.js";
 import eventRoutes from "./routes/event.js";
 import messageNotificationsRoutes from "./routes/messageNotifications.js";
+import aiSearchRoutes from "./routes/aiSearch.js";
 
 // Import the Messenger model for direct messages
 import Messenger from "./models/Messenger.js";
@@ -74,6 +75,7 @@ app.use("/messages", messagesRoutes);
 app.use("/venues", venueRoutes);
 app.use("/events", eventRoutes);
 app.use("/messageNotifications", messageNotificationsRoutes);
+app.use("/api", aiSearchRoutes);
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
@@ -126,18 +128,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // -----------------------
-  // Emitter for group join requests.
-  // When a client wants to request joining a group, they emit "sendGroupJoinRequest"
-  // with details including requesterId, adminId (or room id to notify), groupId, etc.
-  socket.on("sendGroupJoinRequest", (request) => {
-    console.log(
-      `Received group join request from ${request.requesterId} for group ${request.groupId} targeting admin ${request.adminId}`
-    );
-    // Emit the group join request event to the admin's room.
-    io.to(request.adminId).emit("groupJoinRequest", request);
-  });
-  // -----------------------
+
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
@@ -226,7 +217,7 @@ app.get("/test-email",  async (req, res) => {
 
 
 
-cron.schedule("0 7 * * *", async () => {
+cron.schedule("08 12 * * *", async () => {
   try {
     console.log("Running daily event notification job...");
 

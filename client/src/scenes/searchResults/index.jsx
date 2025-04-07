@@ -2,57 +2,53 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { Box, Typography, CircularProgress } from "@mui/material";
+import axios from "axios";
 
 const SearchResults = () => {
-  // Extract query parameters from the URL
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const query = queryParams.get("q") || "";
   const role = queryParams.get("role") || "";
 
-  // State for search results, loading indicator, and errors
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState({ users: [], ai: [] });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);    
+  const [error, setError] = useState(null);
   const token = useSelector((state) => state.token);
 
   useEffect(() => {
     if (query.trim() !== "") {
       setLoading(true);
-      const url = `http://localhost:6001/search?q=${encodeURIComponent(
+      setError(null);
+
+      // AI Search Request
+      const aiUrl = `http://localhost:8000/search?q=${encodeURIComponent(
         query
       )}${role ? `&role=${encodeURIComponent(role)}` : ""}`;
-      console.log("Constructed URL:", url);
 
-      fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((res) => {
-          console.log("Response status:", res.status);
-          if (!res.ok) {
-            // Log detailed error information and then throw an error.
-            throw new Error(
-              `Failed to fetch search results. Status: ${res.status} ${res.statusText}`
-            );
-          }
-          return res.json();
-        })
-        .then((data) => {
-          console.log("Fetched data:", data);
-          setResults(data);
+      // User Search Request
+      const userUrl = `http://localhost:6001/api/search-users?q=${encodeURIComponent(
+        query
+      )}${role ? `&role=${encodeURIComponent(role)}` : ""}`;
+
+      // Perform both searches
+      Promise.all([
+        axios.get(aiUrl, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(userUrl, { headers: { Authorization: `Bearer ${token}` } }),
+      ])
+        .then(([aiResponse, userResponse]) => {
+          setResults({
+            ai: aiResponse.data.results || [],
+            users: userResponse.data || [],
+          });
           setLoading(false);
         })
         .catch((err) => {
-          console.error("Fetch error:", err);
-          setError(err.message);
+          console.error("Error during search:", err);
+          setError("Failed to fetch search results.");
           setLoading(false);
         });
     }
   }, [query, role, token]);
-
 
   return (
     <Box p="2rem">
@@ -63,22 +59,47 @@ const SearchResults = () => {
         <CircularProgress />
       ) : error ? (
         <Typography color="error">{error}</Typography>
-      ) : results.length === 0 ? (
-        <Typography>No results found.</Typography>
       ) : (
-        results.map((user) => (
-          <Box key={user._id} p="1rem" borderBottom="1px solid #ccc">
-            <Typography variant="h6">
-              {user.fullName} ({user.username})
-            </Typography>
-            <Typography variant="body2">
-              {user.bio || "No bio available."}
-            </Typography>
-            <Typography variant="caption" display="block">
-              Role: {user.role}
-            </Typography>
-          </Box>
-        ))
+        <>
+          {/* AI Search Results */}
+          {results.ai.length > 0 && (
+            <Box mb="2rem">
+              <Typography variant="h5">
+                AI Search Results (Events/Clubs)
+              </Typography>
+              {results.ai.map((result, index) => (
+                <Box key={index} p="1rem" borderBottom="1px solid #ccc">
+                  <Typography variant="h6">{result}</Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          {/* User Search Results */}
+          {results.users.length > 0 && (
+            <Box>
+              <Typography variant="h5">User Search Results</Typography>
+              {results.users.map((user) => (
+                <Box key={user._id} p="1rem" borderBottom="1px solid #ccc">
+                  <Typography variant="h6">
+                    {user.fullName} ({user.username})
+                  </Typography>
+                  <Typography variant="body2">
+                    {user.bio || "No bio available."}
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Role: {user.role}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          {/* If No Results */}
+          {results.ai.length === 0 &&
+            results.users.length === 0 &&
+            !loading && <Typography>No results found.</Typography>}
+        </>
       )}
     </Box>
   );

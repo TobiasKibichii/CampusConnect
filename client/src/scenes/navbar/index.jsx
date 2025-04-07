@@ -125,23 +125,21 @@ const Navbar = () => {
   };
 
 
-  const markAsRead = () => {
-    console.log("yyyyyyyyyyyyyyyy")
-    axios
-      .put(
-        "http://localhost:6001/notifications/markAsRead",
-        {}, // Empty body
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-      .then(() => {
-        setNotificationsCount(0); // Reset unread count
-      })
-      .catch((err) => {
-        console.error("Error marking notifications as read:", err);
-      });
-  };
+const markAsRead = async () => {
+  console.log("🚀 markAsRead HIT");
+  try {
+    await axios.put(
+      "http://localhost:6001/notifications/markAsRead",
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    setNotificationsCount(0);
+  } catch (err) {
+    console.error("Error marking notifications as read:", err);
+  }
+};
 
 
   // Fetch general notifications count from the backend
@@ -153,7 +151,8 @@ const Navbar = () => {
         })
         .then((response) => {
           // Assuming response.data is an array of notifications
-          setNotificationsCount(response.data.length);
+          setNotificationsCount(response.data.filter((n) => !n.read).length);
+
         })
         .catch((err) => {
           console.error("Error fetching notifications:", err);
@@ -299,8 +298,9 @@ const Navbar = () => {
           </IconButton>
           {/* General Notifications Icon with separate Badge */}
           <IconButton
-            onClick={() => {
-              markAsRead();
+            onClick={async () => {
+              console.log("🔔 Notification icon clicked");
+              await markAsRead(); 
               navigate("/notifications");
             }}
           >

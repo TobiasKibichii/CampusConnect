@@ -77,7 +77,7 @@ export const approveJoinRequest = async (req, res) => {
     };
 
     // Emit socket
-    const io = req.app.get("io");
+    
     io.to(userId).emit("groupJoinApproved", notification);
     console.log(`📡 Emitted socket notification to user: ${userId}`);
 

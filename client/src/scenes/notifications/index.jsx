@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import axios from "axios";
-import io from "socket.io-client";
+import socket from "../../socket.js";
 import {
   Box,
   Typography,
@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 
 // Connect to the Socket.IO server (adjust the URL as needed)
-const socket = io("http://localhost:6001");
+
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
@@ -42,7 +42,7 @@ const NotificationsPage = () => {
     }
     socket.on("newNotification", (notification) => {
       // Prepend the new notification to the list
-      
+       console.log("yebooooo")
       setNotifications((prev) => [notification, ...prev]);
     });
     return () => {
@@ -57,6 +57,7 @@ const NotificationsPage = () => {
      socket.emit("join", user._id);
    }
 
+
    socket.on("groupJoinApproved", (notification) => {
      console.log(
        "📨 Received groupJoinApproved socket notification:",
@@ -67,7 +68,7 @@ const NotificationsPage = () => {
 
    return () => {
      console.log("🧹 Cleaning up socket listener for groupJoinApproved");
-     socket.off("groupJoinApproved");
+     setTimeout(() =>{socket.off("groupJoinApproved");}, 500)
    };
  }, [user]);
 

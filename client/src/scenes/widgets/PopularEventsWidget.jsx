@@ -9,12 +9,14 @@ import {
   Button,
 } from "@mui/material";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom"; // Added import
 
 const PopularEventsWidget = () => {
   const token = useSelector((state) => state.token);
   const [popularEvents, setPopularEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const eventsPerPage = 5;
+  const eventsPerPage = 10;
+  const navigate = useNavigate(); // Initialize navigate
 
   useEffect(() => {
     const fetchPopularEvents = async () => {
@@ -77,7 +79,11 @@ const PopularEventsWidget = () => {
       <List>
         {currentEvents.length > 0 ? (
           currentEvents.map((event) => (
-            <ListItem key={event._id}>
+            <ListItem
+              key={event._id}
+              button
+              onClick={() => navigate(`/events/${event._id}`)}
+            >
               <ListItemText
                 primary={event.description}
                 secondary={`Likes: ${Object.keys(event.likes || {}).length}`}
