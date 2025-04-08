@@ -1,8 +1,18 @@
 from fastapi import FastAPI, Query
 from semantic_engine import semantic_search, get_posts, get_users
+from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or your frontend URL like ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],  # <-- this is the key
+    allow_headers=["*"],
+)
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -21,17 +31,4 @@ def search(query: str = Query(...), type: str = Query("posts")):
         logger.error("Invalid search type. Use 'posts' or 'users'.")
         return {"error": "Invalid search type. Use 'posts' or 'users'."}
     logger.info("Search results returned.")
-    return {"results": results}
-app = FastAPI()
-
-@app.get("/search")
-def search(query: str = Query(...), type: str = Query("posts")):
-    if type.lower() == "posts":
-        items = get_posts()  # Replace with your actual posts/events fetch logic
-        results = semantic_search(query, items)
-    elif type.lower() == "users":
-        items = get_users()  # Replace with your actual users fetch logic
-        results = semantic_search(query, items)
-    else:
-        return {"error": "Invalid search type. Use 'posts' or 'users'."}
     return {"results": results}

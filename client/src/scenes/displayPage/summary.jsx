@@ -3,7 +3,7 @@ import { Paper, Typography, Box } from "@mui/material";
 
 const Summary = ({ aboutSummary, whatYoullLearnSummary }) => {
   return (
-    <Paper elevation={3} sx={{ padding: "1rem", backgroundColor: "#f9f9" }}>
+    <Paper elevation={3} sx={{ padding: "1rem", backgroundColor: "#f9f9f9" }}>
       <Typography variant="h6" gutterBottom>
         Summaries
       </Typography>

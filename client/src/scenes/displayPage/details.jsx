@@ -12,6 +12,8 @@ import {
   Button,
 } from "@mui/material";
 import { useSelector } from "react-redux";
+import SummaryCard from "./summaryCard.jsx"; // adjust path if needed
+
 
 const PostDetails = () => {
   const { postId } = useParams(); // Expecting a postId from the URL
@@ -252,7 +254,17 @@ const PostDetails = () => {
               )}
             </>
           )}
+          
         </CardContent>
+        {/* Summary appears separately below the card */}
+        <Box mt={4}>
+          <SummaryCard
+            description={post.description}
+            about={post.about}
+            whatYoullLearn={post.whatYoullLearn}
+          />
+        </Box>
+
         {/* Only show the Edit button if the logged in user created the post */}
         {!isEditing && post.userId === currentUserId && (
           <Box sx={{ p: 2, textAlign: "right" }}>
@@ -264,6 +276,10 @@ const PostDetails = () => {
       </Card>
     </Box>
   );
+  {
+    /* SummaryCard goes here */
+  }
+  
 };
 
 export default PostDetails;

@@ -86,7 +86,7 @@ const Navbar = () => {
       setLoading(true);
       axios
         .get(
-          `http://localhost:6001/search?q=${encodeURIComponent(
+          `http://localhost:5000/search?q=${encodeURIComponent(
             debouncedSearchQuery
           )}`,
           {

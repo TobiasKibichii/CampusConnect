@@ -9,13 +9,6 @@ import SummaryCard from "./summaryCard.jsx"; // Right: summary display
 const Index = () => {
   const [showSummary, setShowSummary] = useState(false);
 
-  // Example post/event data; replace these with actual values from your state or URL params.
-  const postId = "somePostId";
-  const eventDescription = `
-    This is a long event description that will be summarized.
-    Replace this with the actual "about" and "whatYoullLearn" fields combined from your event details.
-  `;
-
   const handleToggleSummary = () => {
     setShowSummary((prev) => !prev);
   };
@@ -24,12 +17,12 @@ const Index = () => {
     <Box display="flex" flexDirection="row" gap="1rem" p="2rem">
       {/* Left Column: Note Editor */}
       <Box flexBasis="25%">
-        <NoteEditor postId={postId} />
+        <NoteEditor />
       </Box>
 
       {/* Center Column: Event/Post Details */}
       <Box flexBasis="50%">
-        <Details postId={postId} />
+        <Details />
       </Box>
 
       {/* Right Column: Show/Hide Summary Button at the top, Summary below */}
@@ -43,7 +36,7 @@ const Index = () => {
         <Button variant="contained" onClick={handleToggleSummary}>
           {showSummary ? "Hide Summary" : "Show Summary"}
         </Button>
-        {showSummary && <SummaryCard description={eventDescription} />}
+        {showSummary && <SummaryCard />}
       </Box>
     </Box>
   );

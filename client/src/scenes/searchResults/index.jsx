@@ -21,7 +21,7 @@ const SearchResults = () => {
       setError(null);
 
       // AI Search Request
-      const aiUrl = `http://localhost:8000/search?q=${encodeURIComponent(
+      const aiUrl = `http://localhost:5000/search?q=${encodeURIComponent(
         query
       )}${role ? `&role=${encodeURIComponent(role)}` : ""}`;
 
