@@ -21,6 +21,7 @@ const PopularEventsWidget = () => {
   useEffect(() => {
     const fetchPopularEvents = async () => {
       try {
+        
         // Assuming this endpoint returns events sorted by like count (descending)
         const response = await fetch(
           "http://localhost:6001/posts/popularEvents",

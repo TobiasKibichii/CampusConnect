@@ -31,6 +31,10 @@ import venueRoutes from "./routes/venue.js";
 import eventRoutes from "./routes/event.js";
 import messageNotificationsRoutes from "./routes/messageNotifications.js";
 import aiSearchRoutes from "./routes/aiSearch.js";
+import recommendationRoutes from "./routes/recommendation.js";
+import suggestedGroupsRoutes from "./routes/suggestedGroups.js";
+import suggestedFriendsRoutes from "./routes/suggestedFriends.js";
+import notesRoutes from "./routes/notes.js";
 
 // Import the Messenger model for direct messages
 import Messenger from "./models/Messenger.js";
@@ -76,6 +80,11 @@ app.use("/venues", venueRoutes);
 app.use("/events", eventRoutes);
 app.use("/messageNotifications", messageNotificationsRoutes);
 app.use("/api", aiSearchRoutes);
+app.use("/recommendations",recommendationRoutes)
+app.use("/suggestedGroups", suggestedGroupsRoutes);
+app.use("/suggestedFriends", suggestedFriendsRoutes);
+app.use("/notes", notesRoutes);
+
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);

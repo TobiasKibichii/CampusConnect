@@ -1,38 +1,23 @@
-from transformers import AutoTokenizer, AutoModel
+from sentence_transformers import SentenceTransformer, util
 import torch
-from sklearn.metrics.pairwise import cosine_similarity
 
-
-# Load the model and tokenizer (using a sentence-transformers model)
-tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+# Load the sentence-transformers model (automatically handles tokenizer & model)
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def encode(text: str):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    # Average the token embeddings to get a single vector representation
-    embeddings = outputs.last_hidden_state.mean(dim=1)
-    return embeddings
+    return model.encode(text, convert_to_tensor=True)
 
 def semantic_search(query: str, items: list):
     query_embedding = encode(query)
     results = []
     for item in items:
-        # Combine available text fields for a more robust representation.
-        text = ""
-        if "title" in item:
-            text += item["title"] + " "
-        if "description" in item:
-            text += item["description"] + " "
-        if "bio" in item:
-            text += item["bio"] + " "
-        if not text.strip():
+        # Combine title, description, and bio into one text
+        text = " ".join([item.get("title", ""), item.get("description", ""), item.get("bio", "")]).strip()
+        if not text:
             continue
         item_embedding = encode(text)
-        similarity = cosine_similarity(query_embedding, item_embedding)[0][0]
-        # Only return items that meet a similarity threshold (adjust as needed)
-        if similarity > 0.5:
+        similarity = util.cos_sim(query_embedding, item_embedding).item()
+        if similarity > 0.5:  # You can adjust the similarity threshold
             new_item = item.copy()
             new_item["similarity"] = similarity
             results.append(new_item)
@@ -40,11 +25,29 @@ def semantic_search(query: str, items: list):
     return results
 
 def get_posts():
-    # TODO: Replace this with your actual database query to retrieve posts/events.
-    # For example, query your MongoDB for posts/events and return a list of dictionaries.
-    return []
+    # 🔁 TODO: Replace this with your actual DB query to fetch posts
+    return [
+        {"title": "Campus Coding Hackathon", "description": "A 24-hour challenge", "bio": ""},
+        {"title": "Karaoke Night", "description": "Fun and music for students", "bio": ""},
+    ]
 
 def get_users():
-    # TODO: Replace this with your actual database query to retrieve users.
-    # For example, query your MongoDB for user profiles and return a list of dictionaries.
-    return []
+    # 🔁 TODO: Replace this with your actual DB query to fetch users
+    return [
+        {"title": "Jane Doe", "description": "Computer Science major", "bio": "Enjoys AI, web dev"},
+        {"title": "John Smith", "description": "", "bio": "Member of Drama Club"},
+    ]
+
+# Example usage
+if __name__ == "__main__":
+    query = "student interested in programming events"
+    posts = get_posts()
+    users = get_users()
+
+    print("🔍 Relevant Posts:")
+    for post in semantic_search(query, posts):
+        print(f"- {post['title']} ({post['similarity']:.2f})")
+
+    print("\n🔍 Relevant Users:")
+    for user in semantic_search(query, users):
+        print(f"- {user['title']} ({user['similarity']:.2f})")

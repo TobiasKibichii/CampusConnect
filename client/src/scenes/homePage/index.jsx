@@ -16,6 +16,9 @@ import SavedPreviewWidget from "scenes/widgets/SavedPreviewWidget"; // New compo
 import { useState } from "react";
 import PopularEventsWidget from "scenes/widgets/PopularEventsWidget";
 import DisplayPage from "scenes/displayPage";
+import Recommendations from "scenes/widgets/Recommendation";
+import SuggestedGroups from "scenes/widgets/SuggestedGroups";
+import SuggestedFriends from "scenes/widgets/SuggestedFriends";
 
 const HomePage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
@@ -39,6 +42,7 @@ const HomePage = () => {
           {/* New Saved Preview Widget placed below the UserWidget */}
           <SavedPreviewWidget userId={_id} />
           <PopularEventsWidget />
+          <Recommendations />
         </Box>
 
         <Box
@@ -69,6 +73,8 @@ const HomePage = () => {
             <GroupWidget userId={_id} />
             <Box m="2rem 0" />
             <FriendListWidget userId={_id} />
+            <SuggestedGroups />
+            <SuggestedFriends />
           </Box>
         )}
       </Box>

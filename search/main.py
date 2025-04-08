@@ -2,6 +2,7 @@ from fastapi import FastAPI, Query
 from semantic_engine import semantic_search, get_posts, get_users
 import logging
 
+app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
