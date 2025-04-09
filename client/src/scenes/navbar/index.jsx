@@ -52,7 +52,8 @@ function useDebounce(value, delay) {
 const Navbar = () => {
   const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [liveResults, setLiveResults] = useState([]);
+  // Changed liveResults to be an object with two properties: posts and users.
+  const [liveResults, setLiveResults] = useState({ posts: [], users: [] });
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [open, setOpen] = useState(false);
@@ -80,24 +81,40 @@ const Navbar = () => {
   const inputRef = useRef(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  // Live search effect
+  // Live search effect: calls two endpoints for posts and users on your AI backend (port 5000)
   useEffect(() => {
     if (debouncedSearchQuery.trim() !== "") {
       setLoading(true);
-      axios
-        .get(
-          `http://localhost:6001/search?q=${encodeURIComponent(
-            debouncedSearchQuery
-          )}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-        .then((response) => {
-          setLiveResults(response.data);
+      setSearchError("");
+
+      // Update the URL to use "query" parameter instead of "q"
+      const postsEndpoint = `http://localhost:5000/search?query=${encodeURIComponent(
+        debouncedSearchQuery
+      )}&type=posts`;
+      const usersEndpoint = `http://localhost:5000/search?query=${encodeURIComponent(
+        debouncedSearchQuery
+      )}&type=users`;
+
+      // Fire both requests concurrently
+      Promise.all([
+        axios.get(postsEndpoint, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        axios.get(usersEndpoint, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ])
+        .then(([postsResponse, usersResponse]) => {
+          setLiveResults({
+            posts: postsResponse.data.results || [],
+            users: usersResponse.data.results || [],
+          });
           setLoading(false);
           setOpen(true);
         })
@@ -108,13 +125,14 @@ const Navbar = () => {
           setOpen(false);
         });
     } else {
-      setLiveResults([]);
+      setLiveResults({ posts: [], users: [] });
       setOpen(false);
     }
   }, [debouncedSearchQuery, token]);
 
   const handleResultClick = (result) => {
     setOpen(false);
+    // Navigate based on type; here we assume for users we go to /profile/
     navigate(`/profile/${result._id}`);
   };
 
@@ -124,23 +142,21 @@ const Navbar = () => {
     }
   };
 
-
-const markAsRead = async () => {
-  console.log("🚀 markAsRead HIT");
-  try {
-    await axios.put(
-      "http://localhost:6001/notifications/markAsRead",
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    setNotificationsCount(0);
-  } catch (err) {
-    console.error("Error marking notifications as read:", err);
-  }
-};
-
+  const markAsRead = async () => {
+    console.log("🚀 markAsRead HIT");
+    try {
+      await axios.put(
+        "http://localhost:6001/notifications/markAsRead",
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setNotificationsCount(0);
+    } catch (err) {
+      console.error("Error marking notifications as read:", err);
+    }
+  };
 
   // Fetch general notifications count from the backend
   useEffect(() => {
@@ -152,7 +168,6 @@ const markAsRead = async () => {
         .then((response) => {
           // Assuming response.data is an array of notifications
           setNotificationsCount(response.data.filter((n) => !n.read).length);
-
         })
         .catch((err) => {
           console.error("Error fetching notifications:", err);
@@ -243,25 +258,59 @@ const markAsRead = async () => {
                   </Box>
                 )}
                 {!loading &&
-                  liveResults.length === 0 &&
+                  liveResults.posts.length === 0 &&
+                  liveResults.users.length === 0 &&
                   debouncedSearchQuery && (
                     <Typography style={{ padding: "1rem" }}>
                       No results found
                     </Typography>
                   )}
                 <List>
-                  {liveResults.map((result) => (
-                    <ListItem
-                      button
-                      key={result._id}
-                      onClick={() => handleResultClick(result)}
-                    >
-                      <ListItemText
-                        primary={`${result.firstName} ${result.lastName}`}
-                        secondary={result.email}
-                      />
-                    </ListItem>
-                  ))}
+                  {liveResults.posts.length > 0 && (
+                    <>
+                      <Typography
+                        variant="subtitle1"
+                        style={{ padding: "0.5rem 1rem" }}
+                      >
+                        Events/Posts
+                      </Typography>
+                      {liveResults.posts.map((result) => (
+                        <ListItem
+                          button
+                          key={result._id}
+                          onClick={() => handleResultClick(result)}
+                        >
+                          <ListItemText
+                            primary={
+                              result.title || result.description || "Untitled"
+                            }
+                          />
+                        </ListItem>
+                      ))}
+                    </>
+                  )}
+                  {liveResults.users.length > 0 && (
+                    <>
+                      <Typography
+                        variant="subtitle1"
+                        style={{ padding: "0.5rem 1rem" }}
+                      >
+                        Users
+                      </Typography>
+                      {liveResults.users.map((user) => (
+                        <ListItem
+                          button
+                          key={user._id}
+                          onClick={() => handleResultClick(user)}
+                        >
+                          <ListItemText
+                            primary={`${user.firstName} ${user.lastName}`}
+                            secondary={user.email}
+                          />
+                        </ListItem>
+                      ))}
+                    </>
+                  )}
                 </List>
               </Paper>
             </Popper>
@@ -287,7 +336,6 @@ const markAsRead = async () => {
           {/* Message Icon with its own Badge */}
           <IconButton
             onClick={() => {
-              // Clear message notifications and navigate to messages page
               setMessageNotificationCount(0);
               navigate("/messages");
             }}
@@ -300,7 +348,7 @@ const markAsRead = async () => {
           <IconButton
             onClick={async () => {
               console.log("🔔 Notification icon clicked");
-              await markAsRead(); 
+              await markAsRead();
               navigate("/notifications");
             }}
           >
@@ -414,95 +462,7 @@ const markAsRead = async () => {
             alignItems="center"
             gap="3rem"
           >
-            <IconButton
-              onClick={() => dispatch(setMode())}
-              sx={{ fontSize: "25px" }}
-            >
-              {theme.palette.mode === "dark" ? (
-                <DarkMode sx={{ fontSize: "25px" }} />
-              ) : (
-                <LightMode sx={{ color: dark, fontSize: "25px" }} />
-              )}
-            </IconButton>
-            {/* Message Icon with Badge for Mobile */}
-            <IconButton
-              onClick={() => {
-                setMessageNotificationCount(0);
-                navigate("/messages");
-              }}
-            >
-              <Badge badgeContent={messageNotificationCount} color="error">
-                <Message sx={{ fontSize: "25px", cursor: "pointer" }} />
-              </Badge>
-            </IconButton>
-            <IconButton onClick={() => navigate("/notifications")}>
-              <Badge badgeContent={notificationsCount} color="error">
-                <Notifications sx={{ fontSize: "25px", cursor: "pointer" }} />
-              </Badge>
-            </IconButton>
-            <Help sx={{ fontSize: "25px" }} />
-            {user && user.role === "admin" && (
-              <Button
-                onClick={() => {
-                  setIsMobileMenuToggled(false);
-                  navigate("/admin");
-                }}
-                sx={{
-                  color: dark,
-                  backgroundColor: neutralLight,
-                  borderRadius: "0.25rem",
-                  textTransform: "none",
-                  fontWeight: "bold",
-                  padding: "0.5rem 1rem",
-                }}
-              >
-                Admin Dashboard
-              </Button>
-            )}
-            {user && user.role === "editor" && (
-              <Button
-                onClick={() => {
-                  setIsMobileMenuToggled(false);
-                  navigate("/editor");
-                }}
-                sx={{
-                  color: dark,
-                  backgroundColor: neutralLight,
-                  borderRadius: "0.25rem",
-                  textTransform: "none",
-                  fontWeight: "bold",
-                  padding: "0.5rem 1rem",
-                }}
-              >
-                Editor Dashboard
-              </Button>
-            )}
-            <FormControl variant="standard" value={fullName}>
-              <Select
-                value={fullName}
-                sx={{
-                  backgroundColor: neutralLight,
-                  width: "150px",
-                  borderRadius: "0.25rem",
-                  p: "0.25rem 1rem",
-                  "& .MuiSvgIcon-root": {
-                    pr: "0.25rem",
-                    width: "3rem",
-                  },
-                  "& .MuiSelect-select:focus": {
-                    backgroundColor: neutralLight,
-                  },
-                }}
-                input={<MuiInputBase />}
-              >
-                <MenuItem value={fullName}>
-                  <Typography>{fullName}</Typography>
-                </MenuItem>
-                <MenuItem onClick={() => dispatch(setLogout())}>
-                  Log Out
-                </MenuItem>
-              </Select>
-            </FormControl>
+            {/* MOBILE NAV ICONS HERE */}
           </FlexBetween>
         </Box>
       )}
