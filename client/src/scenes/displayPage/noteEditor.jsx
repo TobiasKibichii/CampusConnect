@@ -25,6 +25,7 @@ const NoteEditor = ({ postId }) => {
           setNoteId(res.data.note._id);
         } else {
           setNoteContent(""); // Prompt to write a note
+          
         }
         setLoading(false);
       } catch (err) {
@@ -65,8 +66,7 @@ const NoteEditor = ({ postId }) => {
     }
   };
 
-  if (loading) return <Typography>Loading note...</Typography>;
-
+ 
   return (
     <Card sx={{ mt: 2 }}>
       <CardContent>

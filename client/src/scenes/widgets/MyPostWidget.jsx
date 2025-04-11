@@ -8,10 +8,10 @@ import {
   Box,
   Divider,
   Typography,
-  InputBase,
   useTheme,
   Button,
   IconButton,
+  InputBase,
   useMediaQuery,
   Select,
   MenuItem,
@@ -29,6 +29,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
+// Import ReactQuill and its styles
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
@@ -58,6 +62,7 @@ const MyPostWidget = ({ picturePath }) => {
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
+
 
   // Fetch available venues when postType is "event"
   useEffect(() => {
@@ -115,7 +120,6 @@ const MyPostWidget = ({ picturePath }) => {
       const eventFromDate = new Date(`${eventDate}T${eventTimeFrom}:00`);
       const eventToDate = new Date(`${eventDate}T${eventTimeTo}:00`);
       formData.append("eventTimeFrom", eventFromDate.toISOString());
-      formData.append("eventTimeTo", eventToDate.toISOString());
       // Save the selected venue's ID as the location field.
       formData.append("location", selectedVenue ? selectedVenue._id : "");
     }
@@ -165,27 +169,29 @@ const MyPostWidget = ({ picturePath }) => {
     setBookedSlots([]);
     setPostType("post");
     setIsImage(false);
-
-    
   };
 
   return (
     <WidgetWrapper>
-      {/* Render the description input only if creating a regular post */}
+      {/* Render the post input using ReactQuill if postType is "post" */}
       {postType === "post" && (
         <FlexBetween gap="1.5rem">
           <UserImage image={picturePath} />
-          <InputBase
-            placeholder="What's on your mind..."
-            onChange={(e) => setPost(e.target.value)}
-            value={post}
+          <Box
             sx={{
               width: "100%",
               backgroundColor: palette.neutral.light,
               borderRadius: "2rem",
               padding: "1rem 2rem",
             }}
-          />
+          >
+            <ReactQuill
+              placeholder="What's on your mind..."
+              value={post}
+              onChange={setPost}
+              theme="snow"
+            />
+          </Box>
         </FlexBetween>
       )}
 
@@ -208,7 +214,7 @@ const MyPostWidget = ({ picturePath }) => {
             placeholder="Event Title"
             value={eventTitle}
             onChange={(e) => setEventTitle(e.target.value)}
-            inputProps={{ maxLength: 50 }}
+            inputProps={{ maxLength: 100 }}
             fullWidth
             variant="outlined"
             sx={{ mb: 1 }}
@@ -218,25 +224,29 @@ const MyPostWidget = ({ picturePath }) => {
             placeholder="About the event"
             value={eventAbout}
             onChange={(e) => setEventAbout(e.target.value)}
-            inputProps={{ maxLength: 200 }}
+            inputProps={{ maxLength: 400 }}
             fullWidth
             variant="outlined"
             sx={{ mb: 1 }}
             multiline
             rows={3}
           />
-          <TextField
-            label="What You'll Learn"
-            placeholder="What you'll learn"
-            value={eventLearn}
-            onChange={(e) => setEventLearn(e.target.value)}
-            inputProps={{ maxLength: 500 }}
-            fullWidth
-            variant="outlined"
-            multiline
-            rows={5}
-            sx={{ mb: 2 }}
-          />
+          {/* Replace the "What You'll Learn" TextField with ReactQuill */}
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant="subtitle2"
+              color="textSecondary"
+              sx={{ mb: 1 }}
+            >
+              What You'll Learn
+            </Typography>
+            <ReactQuill
+              value={eventLearn}
+              onChange={setEventLearn}
+              placeholder="What you'll learn"
+              theme="snow"
+            />
+          </Box>
           <InputBase
             type="date"
             value={eventDate}
