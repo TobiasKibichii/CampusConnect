@@ -7,25 +7,25 @@ import { useSelector } from "react-redux";
 
 const NoteEditor = ({ postId }) => {
   const token = useSelector((state) => state.token);
-  // Assume the user's id is available in state.user.id
   const userId = useSelector((state) => state.user?.id);
   const [noteContent, setNoteContent] = useState("");
   const [noteId, setNoteId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch the note for the given post and user
   useEffect(() => {
     const fetchNote = async () => {
       try {
-        const res = await axios.get(`/api/notes/${postId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          `http://localhost:6001/notes/notes/${postId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         if (res.data.note) {
           setNoteContent(res.data.note.content);
           setNoteId(res.data.note._id);
         } else {
-          setNoteContent(""); // Prompt to write a note
-          
+          setNoteContent("");
         }
         setLoading(false);
       } catch (err) {
@@ -40,13 +40,28 @@ const NoteEditor = ({ postId }) => {
 
   const saveNote = async () => {
     try {
-      const res = await axios.post(
-        "/api/notes",
-        { postId, content: noteContent },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setNoteId(res.data._id);
-      alert("Note saved!");
+      if (noteId) {
+        // Update existing note
+        await axios.put(
+          `http://localhost:6001/notes/notes/${noteId}`,
+          { content: noteContent },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        alert("Note updated!");
+      } else {
+        // Create new note
+        const res = await axios.post(
+          `http://localhost:6001/notes/notes`,
+          { postId, content: noteContent },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setNoteId(res.data._id);
+        alert("Note created!");
+      }
     } catch (err) {
       console.error("Error saving note:", err);
     }
@@ -55,7 +70,7 @@ const NoteEditor = ({ postId }) => {
   const deleteNote = async () => {
     if (!noteId) return;
     try {
-      await axios.delete(`/api/notes/${noteId}`, {
+      await axios.delete(`http://localhost:6001/notes/notes/${noteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNoteContent("");
@@ -66,17 +81,16 @@ const NoteEditor = ({ postId }) => {
     }
   };
 
- 
   return (
     <Card sx={{ mt: 2 }}>
       <CardContent>
         <Typography variant="h6" sx={{ mb: 1 }}>
-          {noteContent ? "Edit your note" : "Write your note"}
+          {noteId ? "Edit your note" : "Write your note"}
         </Typography>
         <ReactQuill value={noteContent} onChange={setNoteContent} />
         <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
           <Button variant="contained" onClick={saveNote}>
-            Save Note
+            {noteId ? "Update Note" : "Save Note"}
           </Button>
           {noteContent && noteId && (
             <Button variant="outlined" color="error" onClick={deleteNote}>

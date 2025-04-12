@@ -15,13 +15,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from transformers import BartTokenizer, BartForConditionalGeneration
 
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+tokenizer = BartTokenizer.from_pretrained("facebook/bart-large-cnn")
+model = BartForConditionalGeneration.from_pretrained("facebook/bart-large-cnn")
+
+summarizer = pipeline("summarization", model=model, tokenizer=tokenizer)
+
 
 class TextInput(BaseModel):
     text: str
-
+    
 @app.post("/summarize")
 def summarize(input: TextInput):
-    summary = summarizer(input.text, max_length=60, min_length=20, do_sample=False)
+    tokens = tokenizer.encode(input.text)
+    print("Input text:", input.text)
+    print("Token count:", len(tokens))
+    summary = summarizer(input.text, max_length=200, min_length=100, do_sample=False)
+    print("Summary:", summary[0]["summary_text"])
     return {"summary": summary[0]["summary_text"]}
+
+
+

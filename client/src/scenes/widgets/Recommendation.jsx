@@ -14,15 +14,12 @@ import { getRecommendations } from "../../services/api.js";
 
 const Recommendations = () => {
   const token = useSelector((state) => state.token);
-  // Assuming you have the current userId in your store; if not, adjust accordingly.
   const userId = useSelector((state) => state.user?._id);
   const [recommendations, setRecommendations] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const recommendationsPerPage = 10;
   const navigate = useNavigate();
-  console.log(token, userId)
 
-  
   useEffect(() => {
     const fetchRecommendations = async () => {
       if (userId) {
@@ -78,7 +75,23 @@ const Recommendations = () => {
               key={rec.post._id}
               button
               onClick={() => navigate(`/events/${rec.post._id}`)}
+              sx={{ alignItems: "center" }}
             >
+              {/* Display the event image if available */}
+              {rec.post.picturePath && (
+                <Box
+                  component="img"
+                  src={`http://localhost:6001/assets/${rec.post.picturePath}`}
+                  alt={rec.post.title}
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    objectFit: "cover",
+                    borderRadius: 1,
+                    marginRight: 2,
+                  }}
+                />
+              )}
               <ListItemText
                 primary={rec.post.title}
                 secondary={

@@ -256,15 +256,7 @@ const PostDetails = () => {
           )}
           
         </CardContent>
-        {/* Summary appears separately below the card */}
-        <Box mt={4}>
-          <SummaryCard
-            description={post.description}
-            about={post.about}
-            whatYoullLearn={post.whatYoullLearn}
-          />
-        </Box>
-
+       
         {/* Only show the Edit button if the logged in user created the post */}
         {!isEditing && post.userId === currentUserId && (
           <Box sx={{ p: 2, textAlign: "right" }}>

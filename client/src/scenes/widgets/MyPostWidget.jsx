@@ -120,6 +120,7 @@ const MyPostWidget = ({ picturePath }) => {
       const eventFromDate = new Date(`${eventDate}T${eventTimeFrom}:00`);
       const eventToDate = new Date(`${eventDate}T${eventTimeTo}:00`);
       formData.append("eventTimeFrom", eventFromDate.toISOString());
+      formData.append("eventTimeTo", eventToDate.toISOString());
       // Save the selected venue's ID as the location field.
       formData.append("location", selectedVenue ? selectedVenue._id : "");
     }
@@ -138,24 +139,7 @@ const MyPostWidget = ({ picturePath }) => {
     const posts = await response.json();
     dispatch(setPosts(posts));
 
-    // If event post, update the venue status on the backend.
-    if (postType === "event" && selectedVenue) {
-      const patchResponse = await fetch(
-        `http://localhost:6001/venues/updateStatus/${selectedVenue._id}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ available: false }),
-        }
-      );
-      if (!patchResponse.ok) {
-        console.error("Error updating venue status");
-      }
-    }
-
+   
     // Reset form states
     setImage(null);
     setPost("");
@@ -224,7 +208,7 @@ const MyPostWidget = ({ picturePath }) => {
             placeholder="About the event"
             value={eventAbout}
             onChange={(e) => setEventAbout(e.target.value)}
-            inputProps={{ maxLength: 400 }}
+            
             fullWidth
             variant="outlined"
             sx={{ mb: 1 }}
@@ -276,6 +260,7 @@ const MyPostWidget = ({ picturePath }) => {
                 [1, 2, 3].map((hours) => {
                   const [startHour] = eventTimeFrom.split(":").map(Number);
                   const endHour = (startHour + hours) % 24;
+                  
                   return (
                     <MenuItem key={hours} value={`${endHour}:00`}>
                       {hours} Hour{hours > 1 ? "s" : ""}

@@ -9,19 +9,18 @@ import {
   Button,
 } from "@mui/material";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom"; // Added import
+import { useNavigate } from "react-router-dom";
 
 const PopularEventsWidget = () => {
   const token = useSelector((state) => state.token);
   const [popularEvents, setPopularEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 10;
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPopularEvents = async () => {
       try {
-        
         // Assuming this endpoint returns events sorted by like count (descending)
         const response = await fetch(
           "http://localhost:6001/posts/popularEvents",
@@ -31,6 +30,7 @@ const PopularEventsWidget = () => {
         );
         const data = await response.json();
         setPopularEvents(data.events);
+        console.log(data.events)
       } catch (error) {
         console.error("Error fetching popular events:", error);
       }
@@ -84,7 +84,23 @@ const PopularEventsWidget = () => {
               key={event._id}
               button
               onClick={() => navigate(`/events/${event._id}`)}
+              sx={{ alignItems: "center" }}
             >
+              {/* Render the event image if available */}
+              {event.picturePath && (
+                <Box
+                  component="img"
+                  src={`http://localhost:6001/assets/${event.picturePath}`}
+                  alt={event.description}
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    objectFit: "cover",
+                    borderRadius: 1,
+                    marginRight: 2,
+                  }}
+                />
+              )}
               <ListItemText
                 primary={event.description}
                 secondary={`Likes: ${Object.keys(event.likes || {}).length}`}

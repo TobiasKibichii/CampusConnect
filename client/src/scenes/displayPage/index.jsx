@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Button } from "@mui/material";
+import axios from "axios";
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 // Import components (adjust paths as needed)
 import Details from "./details.jsx"; // Center: details of the post/event
@@ -8,16 +11,42 @@ import SummaryCard from "./summaryCard.jsx"; // Right: summary display
 
 const Index = () => {
   const [showSummary, setShowSummary] = useState(false);
+  const { postId } = useParams();
+  const [eventData, setEventData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const token = useSelector((state) => state.token);
+ 
 
   const handleToggleSummary = () => {
     setShowSummary((prev) => !prev);
   };
 
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:6001/events/${postId}`, { headers: { Authorization: `Bearer ${token}` }}
+        );
+        
+        setEventData(response.data);
+      } catch (error) {
+        console.error("Error fetching event:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (postId) {
+      fetchEventData();
+    }
+  }, [postId]);
+
+
   return (
     <Box display="flex" flexDirection="row" gap="1rem" p="2rem">
       {/* Left Column: Note Editor */}
       <Box flexBasis="25%">
-        <NoteEditor />
+        <NoteEditor postId={postId}/>
       </Box>
 
       {/* Center Column: Event/Post Details */}
@@ -36,7 +65,13 @@ const Index = () => {
         <Button variant="contained" onClick={handleToggleSummary}>
           {showSummary ? "Hide Summary" : "Show Summary"}
         </Button>
-        {showSummary && <SummaryCard />}
+        {showSummary && (
+          <SummaryCard
+            about={eventData.about}
+            
+            whatYoullLearn={eventData.whatYoullLearn}
+          />
+        )}
       </Box>
     </Box>
   );
