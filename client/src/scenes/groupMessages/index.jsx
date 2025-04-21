@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useParams, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
+import io from "socket.io-client";
 import WidgetWrapper from "components/WidgetWrapper";
 import FlexBetween from "components/FlexBetween";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
@@ -19,7 +20,7 @@ import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
-// Helper function to format "time ago"
+// Helper function to format 'time ago'
 const formatTimeAgo = (timestamp) => {
   const now = new Date();
   const past = new Date(timestamp);
@@ -51,12 +52,12 @@ const GroupMessages = () => {
   const [replyText, setReplyText] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // State to control expansion of nested replies
   const [expandedMessage, setExpandedMessage] = useState({});
 
   const messagesEndRef = useRef(null);
+  const socketRef = useRef(null);
 
-  // Fetch group details and messages from the API
+  // Fetch group details and messages
   useEffect(() => {
     fetch(`http://localhost:6001/groupMessages/${groupId}/messages`, {
       headers: {
@@ -80,18 +81,18 @@ const GroupMessages = () => {
       });
   }, [groupId, token]);
 
-  // Auto-scroll to the bottom when messages update
+
+  // Auto-scroll
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Submit a new top-level group message
   const submitNewMessage = async () => {
     if (!newMessageText.trim()) return;
     try {
-      const response = await fetch(
+      const res = await fetch(
         `http://localhost:6001/groupMessages/${groupId}/messages`,
         {
           method: "POST",
@@ -99,26 +100,23 @@ const GroupMessages = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            text: newMessageText,
-            parentMessageId: null, // top-level message
-          }),
+          body: JSON.stringify({ text: newMessageText, parentMessageId: null }),
         }
       );
-      if (!response.ok) throw new Error("Failed to send message");
-      const data = await response.json();
+      if (!res.ok) throw new Error("Failed to send message");
+      const data = await res.json();
       setMessages((prev) => [...prev, data.message]);
       setNewMessageText("");
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } catch (err) {
+      console.error("Error sending message:", err);
     }
   };
 
-  // Submit a reply to a message
   const submitReply = async (parentMessage) => {
     if (!replyText.trim()) return;
+
     try {
-      const response = await fetch(
+      const res = await fetch(
         `http://localhost:6001/groupMessages/${groupId}/messages`,
         {
           method: "POST",
@@ -132,26 +130,37 @@ const GroupMessages = () => {
           }),
         }
       );
-      if (!response.ok) throw new Error("Failed to send reply");
-      const data = await response.json();
+
+      
+
+      // Emit the reply to group via Socket.io
+      console.log("bbbbbbb")
+      console.log("bbbbbbb")
+      console.log("bbbbbbb")
+      socketRef.current.emit("sendGroupMessage", {
+        senderId: loggedInUserId,
+        groupId,
+        text: replyText,
+        parentMessageId: parentMessage._id,
+        message: data.message, // optional: include the saved message
+      });
+
+
+      if (!res.ok) throw new Error("Failed to send reply");
+      const data = await res.json();
+
       setMessages((prev) => [...prev, data.message]);
       setReplyingTo(null);
       setReplyText("");
-    } catch (error) {
-      console.error("Error sending reply:", error);
+    } catch (err) {
+      console.error("Error sending reply:", err);
     }
   };
 
-  // Toggle expansion for nested replies (if any)
-  const toggleMessageExpansion = (messageId) => {
-    setExpandedMessage((prev) => ({
-      ...prev,
-      [messageId]: !prev[messageId],
-    }));
-  };
 
-  // Recursive function to render a message and its nested replies,
-  // mimicking the comments section in PostWidget.
+  const toggleMessageExpansion = (id) =>
+    setExpandedMessage((prev) => ({ ...prev, [id]: !prev[id] }));
+
   const renderMessage = (message, level = 0) => {
     const profileUrl = message.sender?.picturePath
       ? `http://localhost:6001/assets/${message.sender.picturePath}`
@@ -161,9 +170,8 @@ const GroupMessages = () => {
       <Box key={message._id} ml={`${level * 2}rem`} mt="0.5rem">
         <Divider />
         <Box display="flex" alignItems="center" gap="0.5rem">
-          
           <Avatar
-            src={profileUrl || ""}
+            src={profileUrl}
             alt={`${message.sender?.firstName} ${message.sender?.lastName}`}
           />
           <Box flex={1}>
@@ -196,8 +204,7 @@ const GroupMessages = () => {
           >
             <ReplyIcon fontSize="small" />
           </Button>
-          {/* For top-level messages, if there are replies, show a dropdown arrow */}
-          {level === 0 && message.replies && message.replies.length > 0 && (
+          {level === 0 && message.replies?.length > 0 && (
             <Box display="flex" alignItems="center" ml="2rem" mt="0.5rem">
               <IconButton
                 onClick={() => toggleMessageExpansion(message._id)}
@@ -220,7 +227,6 @@ const GroupMessages = () => {
           )}
         </Box>
 
-        {/* Reply input for this message */}
         {replyingTo?._id === message._id && (
           <Box mt="0.5rem" ml="2rem">
             <TextField
@@ -235,9 +241,7 @@ const GroupMessages = () => {
           </Box>
         )}
 
-        {/* Recursively render nested replies if expanded */}
         {expandedMessage[message._id] &&
-          message.replies &&
           message.replies.map((reply) => renderMessage(reply, level + 1))}
       </Box>
     );
@@ -260,21 +264,15 @@ const GroupMessages = () => {
         </Typography>
       </Box>
 
-      {/* Render messages (only top-level messages are rendered directly) */}
+      {/* Render messages */}
       <Box>
-        {messages.length > 0 ? (
-          messages
-            .filter((message) => !message.parentMessageId)
-            .map((message) => renderMessage(message))
-        ) : (
-          <Typography color={medium} textAlign="center">
-            No messages yet.
-          </Typography>
-        )}
+        {messages
+          .filter((m) => !m.parentMessageId)
+          .map((msg) => renderMessage(msg))}
       </Box>
       <Box ref={messagesEndRef} />
 
-      {/* Input for a new top-level message */}
+      {/* New message input */}
       <Box mt="1rem">
         <TextField
           fullWidth

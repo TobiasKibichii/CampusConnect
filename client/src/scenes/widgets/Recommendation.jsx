@@ -15,6 +15,7 @@ import { getRecommendations } from "../../services/api.js";
 const Recommendations = () => {
   const token = useSelector((state) => state.token);
   const userId = useSelector((state) => state.user?._id);
+  
   const [recommendations, setRecommendations] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const recommendationsPerPage = 10;
@@ -100,7 +101,10 @@ const Recommendations = () => {
                       {rec.post.description}
                     </Typography>
                     <Typography variant="caption">
-                      Similarity: {rec.similarity.toFixed(2)}
+                      Similarity:{" "}
+                      {rec.similarity != null
+                        ? rec.similarity.toFixed(2)
+                        : "N/A"}
                     </Typography>
                   </>
                 }

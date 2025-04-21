@@ -45,6 +45,10 @@ import Post from "./models/Post.js";
 // Import your Venue model
 import Venue from "./models/Venue.js";
 
+import Message from "./models/Message.js";
+import GroupMessageNotification from "./models/GroupMessageNotification.js";
+import Group from "./models/Group.js";
+
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -136,6 +140,63 @@ io.on("connection", (socket) => {
       console.error("Error sending message:", err);
     }
   });
+
+
+
+  
+
+socket.on("sendGroupMessage", async ({ senderId, groupId, text }) => {
+  try {
+    // Save the group message
+    const newMessage = new Message({
+      sender: senderId,
+      groupId,
+      text,
+    });
+    console.log(newMessage)
+    await newMessage.save();
+
+    // Get all members of the group (excluding sender)
+    const group = await Group.findById(groupId).populate("members");
+    const recipients = group.members.filter(m => m._id.toString() !== senderId);
+
+
+    console.log("kkkkkkk")
+    console.log("kkkkkkk")
+    // Save a notification for each recipient
+
+    const notifications = recipients.map(member => ({
+      recipient: member._id,
+      groupId,
+      sender: senderId,
+      message: text.slice(0, 50),
+      isRead: false,
+    }));
+    console.log("📩 Notifications to insert:", notifications);
+
+    await GroupMessageNotification.insertMany(notifications);
+
+    // Emit to all group members (except sender)
+    recipients.forEach(member => {
+      io.to(member._id.toString()).emit("receiveGroupMessage", {
+        groupId,
+        message: newMessage,
+      });
+    });
+
+    // Emit back to sender for confirmation
+    socket.emit("receiveGroupMessage", {
+      groupId,
+      message: newMessage,
+    });
+
+  } catch (err) {
+    console.error("Error sending group message:", err);
+  }
+});
+
+
+
 
 
 

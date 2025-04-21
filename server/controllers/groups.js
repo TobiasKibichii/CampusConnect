@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 export const getGroups = async (req, res) => {
   try {
-    console.log("req.user._id:", req.user._id, "Type:", typeof req.user._id);
+    console.log("req.user._id:", req.user.id, "Type:", typeof req.user.id);
     // Convert the string to an ObjectId
     const userId = mongoose.Types.ObjectId(req.user.id);
         
@@ -30,6 +30,7 @@ export const getGroups = async (req, res) => {
     const suggestedGroups = allGroups.filter(
       (group) => !myGroupIds.includes(group._id.toString())
     );
+    console.log(myGroups)
 
     res.json({ myGroups, suggestedGroups });
   } catch (error) {

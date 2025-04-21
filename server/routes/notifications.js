@@ -2,6 +2,7 @@ import express from "express";
 import { verifyToken } from "../middleware/auth.js";
 import { getNotifications} from "../controllers/notifications.js";
 import Notification from "../models/Notification.js";
+import GroupMessageNotification from "../models/GroupMessageNotification.js";
 
 const router = express.Router();
 
@@ -23,5 +24,37 @@ router.put("/markAsRead", verifyToken, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+
+
+// GET unread group notifications
+router.get("/groupNotifications", verifyToken, async (req, res) => {
+  try {
+    const notifications = await GroupMessageNotification.find({
+      userId: req.user.id,
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(notifications);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch group notifications" });
+  }
+});
+
+// MARK all as read
+router.put("/groupNotifications/markAsRead", verifyToken, async (req, res) => {
+  try {
+    console.log("yoloooo")
+    console.log("yoloooo")
+    console.log("yoloooo")
+    await GroupMessageNotification.updateMany(
+      { userId: req.user.id, read: false },
+      { $set: { read: true } }
+    );
+    res.status(200).json({ message: "All group notifications marked as read" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to mark group notifications as read" });
+  }
+});
+
 
 export default router;

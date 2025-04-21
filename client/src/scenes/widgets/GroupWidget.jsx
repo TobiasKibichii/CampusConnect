@@ -6,6 +6,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Badge
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -13,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
 import io from "socket.io-client"; // Ensure you have a socket instance set up
+import axios from "axios";
 
 const GroupWidget = () => {
   const { palette } = useTheme();
@@ -34,6 +36,7 @@ const GroupWidget = () => {
   const [groupName, setGroupName] = useState("");
   const [error, setError] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [groupNotificationsCount, setGroupNotificationsCount] = useState(0);
 
   // Helper: check if the user is already a member of a specific group.
   const isUserInGroup = (groupId) => {
@@ -82,6 +85,46 @@ const GroupWidget = () => {
         setLoading(false);
       });
   }, [token]);
+
+
+
+  useEffect(() => {
+    if (token) {
+      axios
+        .get("http://localhost:6001/notifications/groupNotifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          setGroupNotificationsCount(
+            response.data.filter((n) => !n.read).length
+          );
+        })
+        .catch((err) => {
+          console.error("Error fetching group notifications:", err);
+        });
+    }
+  }, [token]);
+
+
+
+  const markGroupNotificationsAsRead = async () => {
+    console.log("📥 markGroupNotificationsAsRead HIT");
+    try {
+      await axios.put(
+        "http://localhost:6001/notifications/groupNotifications/markAsRead",
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setGroupNotificationsCount(0);
+    } catch (err) {
+      console.error("Error marking group notifications as read:", err);
+    }
+  };
+
+
+
 
   // Handler for creating a new group (for editors)
   const handleCreateGroup = (e) => {
@@ -162,6 +205,10 @@ const GroupWidget = () => {
     }
   };
 
+
+  
+
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -193,7 +240,20 @@ const GroupWidget = () => {
                 button
                 onClick={() => handleOpenGroup(group._id)}
               >
-                <ListItemText primary={group.name} />
+                <Badge
+                  badgeContent={groupNotificationsCount}
+                  color="error"
+                  
+                >
+                  <ListItemText
+                    primary={group.name}
+                    onClick={async () => {
+                      console.log("🔔 Notification icon clicked");
+                      await markGroupNotificationsAsRead();
+                      
+                    }}
+                  />
+                </Badge>
               </ListItem>
             ))}
           </List>

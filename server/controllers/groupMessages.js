@@ -1,5 +1,6 @@
 import Group from "../models/Group.js";
 import Message from "../models/Message.js";
+import GroupMessageNotification from "../models/GroupMessageNotification.js";
 
 // GET /groups/:groupId
 export const getGroupDetails = async (req, res) => {
@@ -42,16 +43,32 @@ export const postGroupMessage = async (req, res) => {
       return res.status(400).json({ message: "Message text is required" });
     }
 
-    // Create a new message; assume req.user is populated by verifyToken middleware.
+    // Save message
     const message = new Message({
       group: groupId,
-      sender: req.user.id, // or req.user._id if that's what you use
+      sender: req.user.id,
       text,
     });
     await message.save();
-
-    // Optionally populate sender details before sending the response.
     await message.populate("sender", "firstName lastName");
+
+    // Get group members (excluding sender)
+    const group = await Group.findById(groupId).populate("members");
+    const recipients = group.members.filter(
+      (member) => member._id.toString() !== req.user.id
+    );
+
+    // Create notifications
+    const notifications = recipients.map((member) => ({
+      recipient: member._id,
+      groupId,
+      sender: req.user.id,
+      message: text.slice(0, 50),
+      isRead: false,
+    }));
+
+    // Save notifications
+    await GroupMessageNotification.insertMany(notifications);
 
     res.status(201).json({ message });
   } catch (error) {
