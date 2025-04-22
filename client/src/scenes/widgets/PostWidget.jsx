@@ -73,8 +73,7 @@ const PostWidget = ({
   const [clikes, setCLikes] = useState({});
   const [likedComments, setLikedComments] = useState({});
   const [showFullDescription, setShowFullDescription] = useState(false);
-
-
+  
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { PersonAddOutlined, PersonRemoveOutlined } from "@mui/icons-material";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,22 +20,37 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const main = palette.neutral.main;
   const medium = palette.neutral.medium;
 
-  const isFriend = friends.find((friend) => friend._id === friendId._id);
-  console.log(friendId)
-  const patchFriend = async () => {
-    
-    const response = await fetch(
-      `http://localhost:6001/users/${_id}/${friendId._id}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
+  // Local state to handle toggle immediately
+  const [isFriend, setIsFriend] = useState(false);
+
+  // Set initial isFriend status on load
+  useEffect(() => {
+    setIsFriend(
+      friends.some(
+        (friend) => friend._id === friendId || friend._id === friendId._id
+      )
     );
-    const data = await response.json();
-    dispatch(setFriends({ friends: data }));
+
+  }, [friends, friendId]);
+
+  const patchFriend = async () => {
+    setIsFriend((prev) => !prev); // Optimistic toggle
+    try {
+      const response = await fetch(
+        `http://localhost:6001/users/${_id}/${friendId._id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      dispatch(setFriends({ friends: data }));
+    } catch (error) {
+      console.error("Error updating friendship:", error);
+    }
   };
 
   return (
@@ -66,7 +82,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
         </Box>
       </FlexBetween>
       <IconButton
-        onClick={() => patchFriend()}
+        onClick={patchFriend}
         sx={{ backgroundColor: primaryLight, p: "0.6rem" }}
       >
         {isFriend ? (

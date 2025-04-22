@@ -136,14 +136,7 @@ const GroupMessages = () => {
       // Emit the reply to group via Socket.io
       console.log("bbbbbbb")
       console.log("bbbbbbb")
-      console.log("bbbbbbb")
-      socketRef.current.emit("sendGroupMessage", {
-        senderId: loggedInUserId,
-        groupId,
-        text: replyText,
-        parentMessageId: parentMessage._id,
-        message: data.message, // optional: include the saved message
-      });
+    
 
 
       if (!res.ok) throw new Error("Failed to send reply");

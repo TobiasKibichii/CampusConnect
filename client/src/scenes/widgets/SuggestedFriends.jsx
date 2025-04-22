@@ -18,6 +18,7 @@ const SuggestedFriends = () => {
         try {
           const data = await getSuggestedFriends(userId, token);
           setFriends(data);
+          console.log(data)
         } catch (err) {
           console.error("Error fetching suggested friends:", err);
         }
@@ -51,10 +52,10 @@ const SuggestedFriends = () => {
                   display="flex"
                   alignItems="center"
                   gap="1rem"
-                  onClick={() => navigate(`/profile/${candidate._id}`)}
+                  
                 >
                   <Friend
-                    friendId={candidate._id}
+                    friendId={candidate}
                     name={`${candidate.firstName} ${candidate.lastName}`}
                     subtitle={candidate.occupation}
                     userPicturePath={candidate.picturePath}
