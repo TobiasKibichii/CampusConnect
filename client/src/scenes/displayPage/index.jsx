@@ -15,7 +15,6 @@ const Index = () => {
   const [eventData, setEventData] = useState(null);
   const [loading, setLoading] = useState(true);
   const token = useSelector((state) => state.token);
- 
 
   const handleToggleSummary = () => {
     setShowSummary((prev) => !prev);
@@ -25,10 +24,12 @@ const Index = () => {
     const fetchEventData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:6001/events/${postId}`, { headers: { Authorization: `Bearer ${token}` }}
+          `http://localhost:6001/events/${postId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        
-        setEventData(response.data);
+
+        setEventData(response.data); // Set event data
+        console.log("Fetched event data:", response.data); // Log the response directly
       } catch (error) {
         console.error("Error fetching event:", error);
       } finally {
@@ -36,17 +37,14 @@ const Index = () => {
       }
     };
 
-    if (postId) {
-      fetchEventData();
-    }
-  }, [postId]);
-
+    fetchEventData();
+  }, [postId, token]); // Dependencies for the effect
 
   return (
     <Box display="flex" flexDirection="row" gap="1rem" p="2rem">
       {/* Left Column: Note Editor */}
       <Box flexBasis="25%">
-        <NoteEditor postId={postId}/>
+        <NoteEditor postId={postId} />
       </Box>
 
       {/* Center Column: Event/Post Details */}
@@ -68,7 +66,8 @@ const Index = () => {
         {showSummary && (
           <SummaryCard
             about={eventData.about}
-            
+            type={eventData.type}
+            description={eventData.description}
             whatYoullLearn={eventData.whatYoullLearn}
           />
         )}

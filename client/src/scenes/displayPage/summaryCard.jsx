@@ -3,7 +3,7 @@ import { CircularProgress, Alert } from "@mui/material";
 import Summary from "./summary.jsx"; // This is your display component
 import { useSelector } from "react-redux";
 
-const SummaryCard = ({ description, about, whatYoullLearn }) => {
+const SummaryCard = ({ description, about, whatYoullLearn, type }) => {
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,7 +14,8 @@ const SummaryCard = ({ description, about, whatYoullLearn }) => {
       setLoading(true);
       setError(null);
       try {
-        const text = `About: ${about}`;
+        // Dynamically choose the text based on the `type` (event or post)
+        const text = type === "event" ? about : description;
       
         const response = await fetch("http://127.0.0.1:5000/summarize", {
           method: "POST",
@@ -25,11 +26,10 @@ const SummaryCard = ({ description, about, whatYoullLearn }) => {
           body: JSON.stringify({ text }),
         });
        
-        
         if (!response.ok) throw new Error("Failed to fetch summary");
 
         const data = await response.json();
-        console.log(data)
+        console.log(data);
         setSummary(data.summary);
 
       } catch (err) {
@@ -40,7 +40,7 @@ const SummaryCard = ({ description, about, whatYoullLearn }) => {
     };
 
     fetchSummary();
-  }, [description, about, whatYoullLearn]);
+  }, [description, about, whatYoullLearn, type, token]); // Added `type` to the dependency array
 
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;

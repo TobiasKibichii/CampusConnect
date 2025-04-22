@@ -480,13 +480,11 @@ const PostWidget = ({
             justifyContent: "space-between",
           }}
         >
-          
-            <Typography variant="body2" color="primary">
-              Posted on {new Date(createdAt).toLocaleString()}
-            </Typography>
-          
+          <Typography variant="body2" color="primary">
+            Posted on {new Date(createdAt).toLocaleString()}
+          </Typography>
 
-          
+          {loggedInUserId === postUserId._id && ( // Check if the logged-in user is the creator
             <Button
               onClick={handleDelete}
               variant="outlined"
@@ -496,11 +494,14 @@ const PostWidget = ({
                 backgroundColor: "white",
                 minWidth: "36px",
                 padding: "6px",
+                display: "inline-flex", // Ensure button is displayed as inline-flex
+                visibility: "visible", // Ensure button is not hidden
+                opacity: 1, // Ensure button is visible
               }}
             >
               <DeleteOutlineOutlined />
             </Button>
-          
+          )}
         </Box>
 
         <Link
@@ -619,7 +620,7 @@ const PostWidget = ({
 
   // Normal post rendering
   return (
-    <WidgetWrapper m="2rem 0" onClick={() =>{navigate(`/events/${postId}`);}}>
+    <WidgetWrapper m="2rem 0">
       <Friend
         friendId={postUserId}
         name={name}
@@ -639,20 +640,24 @@ const PostWidget = ({
         <Typography variant="body2" color="primary">
           Posted on {new Date(createdAt).toLocaleString()}
         </Typography>
-
-        <Button
-          onClick={handleDelete}
-          variant="outlined"
-          sx={{
-            color: palette.neutral.dark,
-            borderColor: palette.neutral.dark,
-            backgroundColor: "white",
-            minWidth: "36px",
-            padding: "6px",
-          }}
-        >
-          <DeleteOutlineOutlined />
-        </Button>
+        {loggedInUserId === postUserId._id && ( // Check if the logged-in user is the creator
+          <Button
+            onClick={handleDelete}
+            variant="outlined"
+            sx={{
+              color: palette.neutral.dark,
+              borderColor: palette.neutral.dark,
+              backgroundColor: "white",
+              minWidth: "36px",
+              padding: "6px",
+              display: "inline-flex", // Ensure button is displayed as inline-flex
+              visibility: "visible", // Ensure button is not hidden
+              opacity: 1, // Ensure button is visible
+            }}
+          >
+            <DeleteOutlineOutlined />
+          </Button>
+        )}
       </Box>
 
       <Typography
@@ -685,6 +690,9 @@ const PostWidget = ({
             objectFit: "cover",
             borderRadius: "0.75rem",
             marginTop: "0.75rem",
+          }}
+          onClick={() => {
+            navigate(`/events/${postId}`);
           }}
         />
       )}

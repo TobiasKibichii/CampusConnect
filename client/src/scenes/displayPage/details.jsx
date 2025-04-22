@@ -136,7 +136,8 @@ const PostDetails = () => {
           />
         )}
         <CardContent>
-          {isEditing ? (
+          {isEditing ?
+           (
             <>
               {/* Editable description */}
               <TextField
@@ -224,18 +225,18 @@ const PostDetails = () => {
                     variant="body1"
                     color="textSecondary"
                     gutterBottom
-                  >
-                    {post.about}
-                  </Typography>
+                  
+                    dangerouslySetInnerHTML={{ __html:post.about}}
+                  />
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="h6">What You'll Learn</Typography>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     gutterBottom
-                  >
-                    {post.whatYoullLearn}
-                  </Typography>
+                  
+                    dangerouslySetInnerHTML={{ __html:post.whatYoullLearn}}
+                  />
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body2">
                     <strong>Date:</strong>{" "}
