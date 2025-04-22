@@ -119,13 +119,16 @@ const MyPostWidget = ({ picturePath }) => {
       // Combine eventDate with time strings to create full ISO date strings.
       const eventFromDate = new Date(`${eventDate}T${eventTimeFrom}:00`);
       const eventToDate = new Date(`${eventDate}T${eventTimeTo}:00`);
-      formData.append("eventTimeFrom", eventFromDate.toISOString());
-      formData.append("eventTimeTo", eventToDate.toISOString());
+      formData.append("eventTimeFrom", eventFromDate);
+      formData.append("eventTimeTo", eventToDate);
+      console.log("iiiiiiiiii" + eventFromDate)
+      console.log("iiiiiiiiii" + eventToDate)
       // Save the selected venue's ID as the location field.
       formData.append("location", selectedVenue ? selectedVenue._id : "");
     }
 
     if (image) {
+      formData.append("picture", image); // <--- This is what the server expects to receive as the file
       formData.append("picturePath", image.name);
     }
 
@@ -208,7 +211,6 @@ const MyPostWidget = ({ picturePath }) => {
             placeholder="About the event"
             value={eventAbout}
             onChange={(e) => setEventAbout(e.target.value)}
-            
             fullWidth
             variant="outlined"
             sx={{ mb: 1 }}
@@ -260,9 +262,12 @@ const MyPostWidget = ({ picturePath }) => {
                 [1, 2, 3].map((hours) => {
                   const [startHour] = eventTimeFrom.split(":").map(Number);
                   const endHour = (startHour + hours) % 24;
-                  
+
+                  // Ensure two-digit format (e.g., "09" instead of "9")
+                  const formattedHour = String(endHour).padStart(2, "0");
+
                   return (
-                    <MenuItem key={hours} value={`${endHour}:00`}>
+                    <MenuItem key={hours} value={`${formattedHour}:00`}>
                       {hours} Hour{hours > 1 ? "s" : ""}
                     </MenuItem>
                   );

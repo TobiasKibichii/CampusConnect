@@ -116,7 +116,7 @@ export const createPost = async (req, res) => {
       location: type === "event" ? locationValue : user.location,
       description,
       userPicturePath: user.picturePath,
-      picturePath,
+      picturePath: req.file?.filename || null,
       type, // "post" or "event"
       eventDate: type === "event" ? eventDate : null,
       eventTimeFrom: type === "event" ? startDateTime : null,

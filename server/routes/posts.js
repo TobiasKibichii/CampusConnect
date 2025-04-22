@@ -4,19 +4,58 @@ import { verifyToken } from "../middleware/auth.js";
 import multer from "multer";
 import Post from "../models/Post.js";
 
-const upload = multer(); 
 
 
 const router = express.Router();
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/assets"); // storing in public/assets
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+
+
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    // Accept only the "picture" field
+    if (file.fieldname === "picture") {
+      cb(null, true);
+    } else {
+      cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
+    }
+  },
+});
+
+
+
 /* READ */
 router.get("/",  verifyToken, getFeedPosts);
-router.post("/p", verifyToken,upload.none(), createPost, (req, res) => {
-  console.log("📌 Request Received at /p");
-  console.log("📌 Headers:", req.headers);
-  console.log("📌 Body:", req.body);
-  res.json({ message: "Debugging /p" });
-});
+router.post(
+  "/p",
+  verifyToken,
+  upload.single("picture"),
+  async (req, res, next) => {
+    console.log("📌 File:", req.file);
+    console.log("📌 Body:", req.body);
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image uploaded." });
+    }
+
+    try {
+      await createPost(req, res);
+    } catch (err) {
+      console.error("Error creating post:", err);
+      res.status(500).json({ message: "Post creation failed." });
+    }
+  }
+);
+
 
 router.get("/user/:userId", verifyToken, getUserPosts);
 
