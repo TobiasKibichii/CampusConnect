@@ -14,6 +14,7 @@ import FollowEditorsPage from "scenes/loginPage/followEditors";
 import MessageNotifications from "scenes/MessageNotifications";
 import DisplayPosts from "scenes/displayPage";
 import RegisteredEvents from "scenes/registeredEvents";
+import Layout from "scenes/Layout"; // adjust path accordingly
 
 import { useMemo, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -33,7 +34,9 @@ function App() {
     // Listen for the socket event to show notifications
     socket.on("groupJoinApproved", (notification) => {
       console.log("📨 Received notification:", notification);
-      toast.success(`Your request to join ${notification.groupName} has been approved!`);
+      toast.success(
+        `Your request to join ${notification.groupName} has been approved!`
+      );
     });
 
     // Clean up the socket listener when the component is unmounted
@@ -50,54 +53,32 @@ function App() {
           {/* Global ToastContainer */}
           <ToastContainer position="top-right" autoClose={5000} />
           <Routes>
-            {/* Public Landing Page */}
+            {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
-
-            {/* Authentication routes */}
             <Route path="/login" element={<LoginPage />} />
-            
-            {/* Protected routes */}
-            <Route
-              path="/home"
-              element={isAuth ? <HomePage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/profile/:userId"
-              element={isAuth ? <ProfilePage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/groupMessages/:groupId/messages"
-              element={isAuth ? <GroupMessages /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/admin"
-              element={isAuth ? <AdminDashboard /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/editor"
-              element={isAuth ? <EditorDashboard /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/search"
-              element={isAuth ? <SearchResults /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/saved"
-              element={isAuth ? <SavedPosts /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/notifications"
-              element={isAuth ? <Notifications /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/chat/:userId"
-              element={isAuth ? <ChatSection /> : <Navigate to="/login" />}
-            />
             <Route path="/follow-editors" element={<FollowEditorsPage />} />
-            <Route path="/messages" element={<MessageNotifications />} />
-            <Route path="/events/:postId" element={<DisplayPosts />} />
-            <Route path="/posts/:postId" element={<DisplayPosts />} />
-            <Route path="/registeredEvents" element={<RegisteredEvents />} />
+
+            {/* Protected Routes Wrapped in Layout */}
+            <Route
+              element={isAuth ? <Layout /> : <Navigate to="/login" />}
+            >
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/profile/:userId" element={<ProfilePage />} />
+              <Route
+                path="/groupMessages/:groupId/messages"
+                element={<GroupMessages />}
+              />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/editor" element={<EditorDashboard />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/saved" element={<SavedPosts />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/chat/:userId" element={<ChatSection />} />
+              <Route path="/messages" element={<MessageNotifications />} />
+              <Route path="/events/:postId" element={<DisplayPosts />} />
+              <Route path="/posts/:postId" element={<DisplayPosts />} />
+              <Route path="/registeredEvents" element={<RegisteredEvents />} />
+            </Route>
           </Routes>
         </ThemeProvider>
       </BrowserRouter>

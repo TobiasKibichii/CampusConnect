@@ -93,7 +93,7 @@ const NotificationsPage = () => {
                   />
                 </ListItemAvatar>
                 <ListItemText
-                  primary={`${notif.friendId?.firstName} ${notif.friendId?.lastName} ${notif.message}`}
+                  primary={`${notif.friendId?.firstName || " "} ${notif.friendId?.lastName || " "} ${notif.message}`}
                   secondary={new Date(notif.createdAt).toLocaleString()}
                 />
               </ListItem>

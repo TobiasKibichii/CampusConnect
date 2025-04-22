@@ -32,15 +32,10 @@ const PostDetails = () => {
   const [editEventTimeTo, setEditEventTimeTo] = useState("");
   const [editLocation, setEditLocation] = useState("");
 
-  // Helper function to strip HTML tags and trim the text to 10 words
-const stripHtmlAndTrim = (text, wordLimit = 10) => {
-  const strippedText = text.replace(/<[^>]+>/g, ""); // Strip HTML tags
-  const words = strippedText.split(" ");
-  return words.slice(0, wordLimit).join(" ") + (words.length > wordLimit ? "..." : "");
-};
-
-
-  const [showFullText, setShowFullText] = useState(false);
+  // Helper function to strip HTML tags
+  const stripHtml = (text) => {
+    return text.replace(/<[^>]+>/g, ""); // Strip HTML tags
+  };
 
   useEffect(() => {
     const fetchPostDetails = async () => {
@@ -146,6 +141,8 @@ const stripHtmlAndTrim = (text, wordLimit = 10) => {
               {/* Editable description */}
               <TextField
                 fullWidth
+                multiline
+                minRows={6}
                 variant="outlined"
                 label={post.type === "event" ? "Event Title" : "Post Title"}
                 value={editDescription}
@@ -221,18 +218,6 @@ const stripHtmlAndTrim = (text, wordLimit = 10) => {
             </>
           ) : (
             <>
-              <>
-                <Typography variant="h4" gutterBottom>
-                  {showFullText ? (
-                    <span
-                      dangerouslySetInnerHTML={{ __html: post.description }}
-                    />
-                  ) : (
-                    stripHtmlAndTrim(post.description)
-                  )}
-                </Typography>
-
-              </>
               {post.type === "event" ? (
                 <>
                   <Typography
@@ -266,9 +251,11 @@ const stripHtmlAndTrim = (text, wordLimit = 10) => {
                   </Typography>
                 </>
               ) : (
-                <Typography variant="body1" color="textSecondary">
-                  {post.description}
-                </Typography>
+                <Typography
+                  variant="h4"
+                  gutterBottom
+                  dangerouslySetInnerHTML={{ __html: post.description }}
+                />
               )}
             </>
           )}
@@ -288,7 +275,6 @@ const stripHtmlAndTrim = (text, wordLimit = 10) => {
   {
     /* SummaryCard goes here */
   }
-  
 };
 
 export default PostDetails;

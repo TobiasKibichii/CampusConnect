@@ -3,34 +3,34 @@ import mongoose from "mongoose";
 
 export const getGroups = async (req, res) => {
   try {
-    console.log("req.user._id:", req.user.id, "Type:", typeof req.user.id);
-    // Convert the string to an ObjectId
     const userId = mongoose.Types.ObjectId(req.user.id);
-        
+
     let myGroups;
 
     if (req.user.role === "editor") {
-      // For editors, get the group they own (only one allowed)
+      // Editors own one group max
       const group = await Group.findOne({ createdBy: userId });
       myGroups = group ? [group] : [];
     } else {
-      
       myGroups = await Group.find({ members: userId });
-      console.log(req.user.id)
     }
 
-    // Fetch all groups
     const allGroups = await Group.find();
-  
 
-    // Build an array of joined group IDs (as strings)
     const myGroupIds = myGroups.map((g) => g._id.toString());
 
-    // Filter out groups the user is already in for suggestions
-    const suggestedGroups = allGroups.filter(
-      (group) => !myGroupIds.includes(group._id.toString())
-    );
-    console.log(myGroups)
+    const suggestedGroups = allGroups
+      .filter((group) => !myGroupIds.includes(group._id.toString()))
+      .map((group) => {
+        const requested = group.joinRequests?.some(
+          (reqId) => reqId.toString() === userId.toString()
+        );
+
+        return {
+          ...group.toObject(),
+          requested: requested || false,
+        };
+      });
 
     res.json({ myGroups, suggestedGroups });
   } catch (error) {
@@ -38,6 +38,7 @@ export const getGroups = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 export const postGroup = async (req, res) => {

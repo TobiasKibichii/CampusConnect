@@ -1,6 +1,7 @@
 // controllers/editorController.js
 import Group from "../models/Group.js";
 import { io } from "../index.js";
+import Notification from "../models/Notification.js";
 
 
 // GET: Retrieve the group that the editor owns (including members and join requests)
@@ -40,6 +41,9 @@ export const updateGroup = async (req, res) => {
   }
 };
 
+
+
+
 // POST: Approve a join request – remove the user from joinRequests and add to members
 export const approveJoinRequest = async (req, res) => {
   try {
@@ -69,15 +73,21 @@ export const approveJoinRequest = async (req, res) => {
     await group.save();
     console.log("💾 Group updated");
 
-    // Create notification object
+    // Create notification object for the user whose request was approved
     const notification = {
+      recipient: userId,  // The user whose request was approved
+      groupId: group._id,  // The group where the request was approved
+      sender: req.user.id,  // The admin or editor who approved the request
       message: `Your request to join "${group.name}" has been approved.`,
-      type: "group-approval",
+      read: false,  // Initially unread
       createdAt: new Date().toISOString(),
     };
 
-    // Emit socket
-    
+    // Save notification to the database
+    await Notification.create(notification);
+    console.log("💬 Notification saved");
+
+    // Emit socket notification (optional)
     io.to(userId).emit("groupJoinApproved", notification);
     console.log(`📡 Emitted socket notification to user: ${userId}`);
 
@@ -97,16 +107,34 @@ export const rejectJoinRequest = async (req, res) => {
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
+    
     group.joinRequests = group.joinRequests.filter(
       (reqUserId) => reqUserId.toString() !== userId
     );
+    
     await group.save();
+
+    // Create notification object for the user whose request was rejected
+    const notification = {
+      recipient: userId,  // The user whose request was rejected
+      groupId: group._id,  // The group where the request was rejected
+      sender: req.user.id,  // The admin or editor who rejected the request
+      message: `Your request to join "${group.name}" has been rejected.`,
+      read: false,  // Initially unread
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save notification to the database
+    await Notification.create(notification);
+    console.log("💬 Notification saved");
+
     res.json({ group });
   } catch (error) {
     console.error("Error rejecting join request:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // DELETE: Remove a member from the group
 export const removeMember = async (req, res) => {
@@ -116,10 +144,27 @@ export const removeMember = async (req, res) => {
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
+    
     group.members = group.members.filter(
       (id) => id.toString() !== memberId
     );
+
     await group.save();
+
+    // Create notification object for the user who was removed
+    const notification = {
+      recipient: memberId,  // The user who was removed
+      groupId: group._id,  // The group from which the user was removed
+      sender: req.user.id,  // The admin or editor who removed the member
+      message: `You have been removed from the group "${group.name}".`,
+      read: false,  // Initially unread
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save notification to the database
+    await Notification.create(notification);
+    console.log("💬 Notification saved");
+
     res.json({ group });
   } catch (error) {
     console.error("Error removing member:", error);

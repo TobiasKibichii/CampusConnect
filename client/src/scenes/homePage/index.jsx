@@ -30,7 +30,6 @@ const HomePage = () => {
 
   return (
     <Box>
-      <Navbar />
       <Box
         width="100%"
         padding="2rem 6%"
