@@ -17,6 +17,16 @@ const PopularEventsWidget = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 10;
   const navigate = useNavigate();
+  const [showFullText, setShowFullText] = useState(false);
+  
+  
+    const stripHtmlAndTrim = (html, wordLimit = 10) => {
+      const plainText = html.replace(/<[^>]+>/g, ""); // remove HTML tags
+      const words = plainText.trim().split(/\s+/);
+      if (words.length <= wordLimit) return plainText;
+      return words.slice(0, wordLimit).join(" ") + "...";
+    };
+  
 
   useEffect(() => {
     const fetchPopularEvents = async () => {
@@ -102,7 +112,29 @@ const PopularEventsWidget = () => {
                 />
               )}
               <ListItemText
-                primary={event.description}
+                primary={
+                                  <>
+                                    {showFullText ? (
+                                      <span
+                                        dangerouslySetInnerHTML={{ __html: event.description }}
+                                      />
+                                    ) : (
+                                      stripHtmlAndTrim(event.description)
+                                    )}
+                                    {event.description.replace(/<[^>]+>/g, "").split(" ")
+                                      .length > 10 && (
+                                      <Typography
+                                        variant="body2"
+                                        color="primary"
+                                        component="span"
+                                        sx={{ cursor: "pointer", ml: 1 }}
+                                        onClick={() => setShowFullText(!showFullText)}
+                                      >
+                                        {showFullText ? " Show less" : " Show more"}
+                                      </Typography>
+                                    )}
+                                  </>
+                                }
                 secondary={`Likes: ${Object.keys(event.likes || {}).length}`}
               />
             </ListItem>

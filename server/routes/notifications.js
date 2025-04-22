@@ -30,6 +30,9 @@ router.put("/markAsRead", verifyToken, async (req, res) => {
 // GET unread group notifications
 router.get("/groupNotifications", verifyToken, async (req, res) => {
   try {
+    console.log("yoloo")
+    console.log("yoloo")
+    console.log("yoloo")
     const notifications = await GroupMessageNotification.find({
       userId: req.user.id,
     }).sort({ createdAt: -1 });
@@ -47,8 +50,8 @@ router.put("/groupNotifications/markAsRead", verifyToken, async (req, res) => {
     console.log("yoloooo")
     console.log("yoloooo")
     await GroupMessageNotification.updateMany(
-      { userId: req.user.id, read: false },
-      { $set: { read: true } }
+      { userId: req.user.id, isRead: false },
+      { $set: { isRead: true } }
     );
     res.status(200).json({ message: "All group notifications marked as read" });
   } catch (err) {

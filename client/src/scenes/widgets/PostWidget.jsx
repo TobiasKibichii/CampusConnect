@@ -72,6 +72,8 @@ const PostWidget = ({
   const [expandedComment, setExpandedComment] = useState({});
   const [clikes, setCLikes] = useState({});
   const [likedComments, setLikedComments] = useState({});
+  const [showFullDescription, setShowFullDescription] = useState(false);
+
 
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
@@ -574,16 +576,37 @@ const PostWidget = ({
         subtitle={location}
         userPicturePath={userPicturePath}
       />
-      <Typography color={main} sx={{ mt: "1rem" }}>
-        {description}
-      </Typography>
+      <Typography
+        color={main}
+        sx={{ mt: "1rem" }}
+        component="div"
+        dangerouslySetInnerHTML={{
+          __html: showFullDescription
+            ? description
+            : description.split(" ").slice(0, 10).join(" ") + "...",
+        }}
+      />
+      {description.split(" ").length > 10 && (
+        <Button
+          onClick={() => setShowFullDescription(!showFullDescription)}
+          size="small"
+          sx={{ textTransform: "none", mt: "0.25rem", color: primary }}
+        >
+          {showFullDescription ? "Show Less" : "Show More"}
+        </Button>
+      )}
+
       {picturePath && (
         <img
-          width="100%"
-          height="auto"
-          alt="post"
-          style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
           src={`http://localhost:6001/assets/${picturePath}`}
+          alt="post"
+          style={{
+            width: "100%",
+            maxHeight: "300px",
+            objectFit: "cover",
+            borderRadius: "0.75rem",
+            marginTop: "0.75rem",
+          }}
         />
       )}
       {createdAt && (

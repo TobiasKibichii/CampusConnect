@@ -19,6 +19,7 @@ import DisplayPage from "scenes/displayPage";
 import Recommendations from "scenes/widgets/Recommendation";
 import SuggestedGroups from "scenes/widgets/SuggestedGroups";
 import SuggestedFriends from "scenes/widgets/SuggestedFriends";
+import DateFilteredEventsWidget from "scenes/widgets/DateFilteredEventsWidget";
 
 const HomePage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
@@ -41,6 +42,7 @@ const HomePage = () => {
           <UserWidget userId={_id} picturePath={picturePath} />
           {/* New Saved Preview Widget placed below the UserWidget */}
           <SavedPreviewWidget userId={_id} />
+          <DateFilteredEventsWidget />
           <PopularEventsWidget />
           <Recommendations />
         </Box>

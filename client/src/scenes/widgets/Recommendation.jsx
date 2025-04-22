@@ -15,11 +15,22 @@ import { getRecommendations } from "../../services/api.js";
 const Recommendations = () => {
   const token = useSelector((state) => state.token);
   const userId = useSelector((state) => state.user?._id);
-  
+
   const [recommendations, setRecommendations] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const recommendationsPerPage = 10;
   const navigate = useNavigate();
+  const [showFullText, setShowFullText] = useState(false);
+
+  // Helper function to strip HTML tags and trim the text to 10 words
+  const stripHtmlAndTrim = (description, wordLimit = 5) => {
+    const strippedText = description.replace(/<[^>]+>/g, ""); // Strip HTML tags
+    const words = strippedText.split(" ");
+    return (
+      words.slice(0, wordLimit).join(" ") +
+      (words.length > wordLimit ? "..." : "")
+    );
+  };
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -98,8 +109,17 @@ const Recommendations = () => {
                 secondary={
                   <>
                     <Typography variant="body2">
-                      {rec.post.description}
+                      {showFullText ? (
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: rec.post.description,
+                          }}
+                        />
+                      ) : (
+                        stripHtmlAndTrim(rec.post.description)
+                      )}
                     </Typography>
+                    
                     <Typography variant="caption">
                       Similarity:{" "}
                       {rec.similarity != null

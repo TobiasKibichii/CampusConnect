@@ -32,6 +32,16 @@ const PostDetails = () => {
   const [editEventTimeTo, setEditEventTimeTo] = useState("");
   const [editLocation, setEditLocation] = useState("");
 
+  // Helper function to strip HTML tags and trim the text to 10 words
+const stripHtmlAndTrim = (text, wordLimit = 10) => {
+  const strippedText = text.replace(/<[^>]+>/g, ""); // Strip HTML tags
+  const words = strippedText.split(" ");
+  return words.slice(0, wordLimit).join(" ") + (words.length > wordLimit ? "..." : "");
+};
+
+
+  const [showFullText, setShowFullText] = useState(false);
+
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
@@ -211,10 +221,18 @@ const PostDetails = () => {
             </>
           ) : (
             <>
-              <Typography variant="h4" gutterBottom>
-                {/* For events, the event title was stored in description */}
-                {post.description}
-              </Typography>
+              <>
+                <Typography variant="h4" gutterBottom>
+                  {showFullText ? (
+                    <span
+                      dangerouslySetInnerHTML={{ __html: post.description }}
+                    />
+                  ) : (
+                    stripHtmlAndTrim(post.description)
+                  )}
+                </Typography>
+
+              </>
               {post.type === "event" ? (
                 <>
                   <Typography
@@ -254,9 +272,8 @@ const PostDetails = () => {
               )}
             </>
           )}
-          
         </CardContent>
-       
+
         {/* Only show the Edit button if the logged in user created the post */}
         {!isEditing && post.userId === currentUserId && (
           <Box sx={{ p: 2, textAlign: "right" }}>

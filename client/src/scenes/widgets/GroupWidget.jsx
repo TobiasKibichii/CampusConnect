@@ -96,7 +96,7 @@ const GroupWidget = () => {
         })
         .then((response) => {
           setGroupNotificationsCount(
-            response.data.filter((n) => !n.read).length
+            response.data.filter((n) => !n.isRead).length
           );
         })
         .catch((err) => {
