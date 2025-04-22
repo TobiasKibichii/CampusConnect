@@ -74,6 +74,8 @@ const PostWidget = ({
   const [likedComments, setLikedComments] = useState({});
   const [showFullDescription, setShowFullDescription] = useState(false);
   const navigate = useNavigate();
+  const [eventData, setEventData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
@@ -91,8 +93,7 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
 
-  // Constant for venue capacity (hard-coded as 500)
-  const venueCapacity = 500;
+  
 
   // Fetch comments from backend
   const fetchComments = async () => {
@@ -118,6 +119,33 @@ const PostWidget = ({
   useEffect(() => {
     fetchComments();
   }, [postId, token]);
+
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:6001/posts/venueCapacity/${postId}`
+        );
+        console.log("kkk" + response.data)
+        setEventData(response.data); // The event data includes the populated venue
+      } catch (error) {
+        console.error("Error fetching event data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEventData();
+  }, [postId]);
+
+
+  if (!eventData) {
+    return <div>Event not found</div>;
+  }
+
+  // Access event data and venue capacity
+  const { venueId } = eventData;
+  const venueCapacity = venueId ? venueId.capacity : 0;
 
   // Like Post/Event
   const patchLike = async () => {
@@ -312,7 +340,6 @@ const PostWidget = ({
     const allPosts = await res.json();
     dispatch(setPost(allPosts));
   };
-
 
   // Recursive function to render a comment and its nested replies
   const renderComment = (comment, level = 0) => {

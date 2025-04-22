@@ -106,4 +106,28 @@ router.delete("/postDelete/:id", verifyToken, async (req, res) => {
 });
 
 
+
+// Get a specific post or event with populated venue details
+router.get('/venueCapacity/:postId', async (req, res) => {
+  try {
+    
+    const post = await Post.findById(req.params.postId)
+      .populate('venueId'); // Populate the venueId field to get venue details
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    console.log("kkkkk" + post)
+    console.log("kkkkk" + post)
+    console.log("kkkkk" + post)
+    console.log("kkkkk" + post)
+    // Send post data with populated venue information (like capacity)
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
 export default router;
