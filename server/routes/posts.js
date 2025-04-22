@@ -4,6 +4,7 @@ import { verifyToken } from "../middleware/auth.js";
 import multer from "multer";
 import Post from "../models/Post.js";
 
+import mongoose from 'mongoose';
 
 
 const router = express.Router();
@@ -83,5 +84,26 @@ router.get("/popularEvents", verifyToken, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+
+
+// DELETE a post by ID
+router.delete("/postDelete/:id", verifyToken, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    console.log( postId)
+    const deletedPost = await Post.findByIdAndDelete(new mongoose.Types.ObjectId(postId));
+
+    if (!deletedPost) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 export default router;

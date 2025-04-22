@@ -86,6 +86,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
           eventDate,
           eventLocation,
           attendees,
+          createdAt,
         }) => (
           <PostWidget
             key={_id}
@@ -102,6 +103,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
             eventDate={eventDate}
             eventLocation={eventLocation}
             attendees={attendees}
+            createdAt={createdAt}
           />
         )
       )}

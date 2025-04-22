@@ -23,7 +23,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import ReplyIcon from "@mui/icons-material/Reply";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
@@ -73,7 +73,8 @@ const PostWidget = ({
   const [clikes, setCLikes] = useState({});
   const [likedComments, setLikedComments] = useState({});
   const [showFullDescription, setShowFullDescription] = useState(false);
-  
+  const navigate = useNavigate();
+
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
@@ -298,6 +299,21 @@ const PostWidget = ({
     }
   };
 
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    await fetch(`http://localhost:6001/posts/postDelete/${postId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    // re‑fetch feed
+    const res = await fetch("http://localhost:6001/posts", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const allPosts = await res.json();
+    dispatch(setPost(allPosts));
+  };
+
+
   // Recursive function to render a comment and its nested replies
   const renderComment = (comment, level = 0) => {
     const profileUrl = comment.userId?.picturePath
@@ -447,12 +463,46 @@ const PostWidget = ({
     return (
       <WidgetWrapper m="2rem 0">
         {/* Profile section */}
-        <Friend
-          friendId={postUserId}
-          name={name}
-          subtitle={location}
-          userPicturePath={userPicturePath}
-        />
+        {
+          <Friend
+            friendId={postUserId}
+            name={name}
+            subtitle={location}
+            userPicturePath={userPicturePath}
+          />
+        }
+        <Box
+          sx={{
+            border: "1px solid red",
+            p: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          
+            <Typography variant="body2" color="primary">
+              Posted on {new Date(createdAt).toLocaleString()}
+            </Typography>
+          
+
+          
+            <Button
+              onClick={handleDelete}
+              variant="outlined"
+              sx={{
+                color: palette.neutral.dark,
+                borderColor: palette.neutral.dark,
+                backgroundColor: "white",
+                minWidth: "36px",
+                padding: "6px",
+              }}
+            >
+              <DeleteOutlineOutlined />
+            </Button>
+          
+        </Box>
+
         <Link
           to={`/events/${postId}`}
           style={{ textDecoration: "none", color: "inherit" }}
@@ -472,6 +522,7 @@ const PostWidget = ({
                 }}
               />
             )}
+
             {/* Event details: event name, venue and date */}
             <Box mt="0.5rem" p="0.5rem">
               <Typography variant="h6" color={main}>
@@ -568,13 +619,42 @@ const PostWidget = ({
 
   // Normal post rendering
   return (
-    <WidgetWrapper m="2rem 0">
+    <WidgetWrapper m="2rem 0" onClick={() =>{navigate(`/events/${postId}`);}}>
       <Friend
         friendId={postUserId}
         name={name}
         subtitle={location}
         userPicturePath={userPicturePath}
       />
+
+      <Box
+        sx={{
+          border: "1px solid red",
+          p: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Typography variant="body2" color="primary">
+          Posted on {new Date(createdAt).toLocaleString()}
+        </Typography>
+
+        <Button
+          onClick={handleDelete}
+          variant="outlined"
+          sx={{
+            color: palette.neutral.dark,
+            borderColor: palette.neutral.dark,
+            backgroundColor: "white",
+            minWidth: "36px",
+            padding: "6px",
+          }}
+        >
+          <DeleteOutlineOutlined />
+        </Button>
+      </Box>
+
       <Typography
         color={main}
         sx={{ mt: "1rem" }}
