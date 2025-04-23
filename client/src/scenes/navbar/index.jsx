@@ -83,58 +83,50 @@ const Navbar = () => {
 
   // Live search effect: calls two endpoints for posts and users on your AI backend (port 5000)
   useEffect(() => {
-    if (debouncedSearchQuery.trim() !== "") {
-      setLoading(true);
-      setSearchError("");
+   if (debouncedSearchQuery.trim() !== "") {
+     setLoading(true);
+     setSearchError("");
 
-      // Update the URL to use "query" parameter instead of "q"
-      const postsEndpoint = `http://localhost:5000/search?query=${encodeURIComponent(
-        debouncedSearchQuery
-      )}&type=posts`;
-      const usersEndpoint = `http://localhost:5000/search?query=${encodeURIComponent(
-        debouncedSearchQuery
-      )}&type=users`;
+     const postsEndpoint = `http://localhost:8000/search?query=${encodeURIComponent(
+       debouncedSearchQuery
+     )}&type=posts`;
+     const usersEndpoint = `http://localhost:8000/search?query=${encodeURIComponent(
+       debouncedSearchQuery
+     )}&type=users`;
 
-      // Fire both requests concurrently
-      Promise.all([
-        axios.get(postsEndpoint, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-        axios.get(usersEndpoint, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-      ])
-        .then(([postsResponse, usersResponse]) => {
-          setLiveResults({
-            posts: postsResponse.data.results || [],
-            users: usersResponse.data.results || [],
-          });
-          setLoading(false);
-          setOpen(true);
-        })
-        .catch((err) => {
-          console.error("Live search error:", err);
-          setSearchError("Error fetching search results");
-          setLoading(false);
-          setOpen(false);
-        });
-    } else {
-      setLiveResults({ posts: [], users: [] });
-      setOpen(false);
-    }
-  }, [debouncedSearchQuery, token]);
+     Promise.all([
+       axios.get(postsEndpoint, { headers: { /* … */ } }),
+       axios.get(usersEndpoint, { headers: { /* … */ } }),
+     ])
+       .then(([postsResponse, usersResponse]) => {
+      setLiveResults({
+        posts: postsResponse.data.results || [],
+        users: usersResponse.data.results || [],
+      });
+       setLiveResults({
+        posts: (postsResponse.data.results || []).map(r => ({ ...r, __type: "posts" })),
+         users: (usersResponse.data.results || []).map(u => ({ ...u, __type: "users" })),
+});
+         setLoading(false);
+         setOpen(true);
+       })
+       .catch((err) => { /* … */ });
+   } else {
+     setLiveResults({ posts: [], users: [] });
+     setOpen(false);
+   }
+ }, [debouncedSearchQuery, token]);
 
-  const handleResultClick = (result) => {
-    setOpen(false);
-    // Navigate based on type; here we assume for users we go to /profile/
+ const handleResultClick = (result) => {
+  setOpen(false);
+  if (result.__type === "users") {
     navigate(`/profile/${result._id}`);
-  };
+  } else {
+    // for your posts/events routes
+    // pick whichever you prefer: /posts or /events
+    navigate(`/posts/${result._id}`);
+  }
+};
 
   const handleSearch = () => {
     if (searchQuery.trim() !== "") {

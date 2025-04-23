@@ -287,7 +287,7 @@ app.get("/test-email",  async (req, res) => {
 
 
 
-cron.schedule("08 12 * * *", async () => {
+cron.schedule("59 9 * * *", async () => {
   try {
     console.log("Running daily event notification job...");
 
