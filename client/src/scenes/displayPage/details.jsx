@@ -10,20 +10,35 @@ import {
   Divider,
   TextField,
   Button,
+  IconButton,
 } from "@mui/material";
-import { useSelector } from "react-redux";
+import {
+  ChatBubbleOutlineOutlined,
+  FavoriteBorderOutlined,
+  FavoriteOutlined,
+  BookmarkBorderOutlined,
+  BookmarkOutlined,
+  EventAvailableOutlined,
+} from "@mui/icons-material";
+import { useSelector, useDispatch } from "react-redux";
 import SummaryCard from "./summaryCard.jsx"; // adjust path if needed
-
+import FlexBetween from "components/FlexBetween";
+import Friend from "components/Friend";
+import axios from "axios";
+import { updateSavedPosts } from "state";
 
 const PostDetails = () => {
-  const { postId } = useParams(); // Expecting a postId from the URL
+  const { postId } = useParams();
+  const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const currentUserId = useSelector((state) => state.user._id);
+  const savedPosts = useSelector((state) => state.user.savedPosts) || [];
+
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
-  // States for editable fields
+  // Editable fields states
   const [editDescription, setEditDescription] = useState("");
   const [editAbout, setEditAbout] = useState("");
   const [editWhatYoullLearn, setEditWhatYoullLearn] = useState("");
@@ -31,11 +46,17 @@ const PostDetails = () => {
   const [editEventTimeFrom, setEditEventTimeFrom] = useState("");
   const [editEventTimeTo, setEditEventTimeTo] = useState("");
   const [editLocation, setEditLocation] = useState("");
+  const [eventData, setEventData] = useState(null);
 
-  // Helper function to strip HTML tags
-  const stripHtml = (text) => {
-    return text.replace(/<[^>]+>/g, ""); // Strip HTML tags
-  };
+  // New states for widget functionality
+  const [isComments, setIsComments] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isAttending, setIsAttending] = useState(false);
+  
+  // Helper to strip HTML
+  const stripHtml = (text) => text.replace(/<[^>]+>/g, "");
 
   useEffect(() => {
     const fetchPostDetails = async () => {
@@ -44,9 +65,10 @@ const PostDetails = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
-        console.log(data.picturePath + "uuuuuuu");
         setPost(data);
-        // Set initial values for edit mode
+        console.log(data)
+
+        // initialize editing fields
         setEditDescription(data.description || "");
         if (data.type === "event") {
           setEditAbout(data.about || "");
@@ -67,21 +89,97 @@ const PostDetails = () => {
               : ""
           );
           setEditLocation(data.location || "");
+          
         }
+
+        // initialize widget states
+        setIsLiked(Boolean(data.likes?.[currentUserId]));
+        setLikeCount(Object.keys(data.likes || {}).length);
+        setIsSaved(savedPosts.map(String).includes(postId));
+        setIsAttending(data.attendees?.includes(currentUserId));
       } catch (error) {
         console.error("Error fetching post details:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchPostDetails();
-  }, [postId, token]);
 
-  const handleSave = async () => {
-    // Build updated post object depending on type
-    let updatedFields = {
-      description: editDescription,
-    };
+    fetchPostDetails();
+  }, [postId, token, currentUserId, savedPosts]);
+
+  
+    useEffect(() => {
+      const fetchEventData = async () => {
+        try {
+          const response = await axios.get(
+            `http://localhost:6001/posts/venueCapacity/${postId}`
+          );
+          console.log("kkk" + response.data)
+          setEventData(response.data); // The event data includes the populated venue
+        } catch (error) {
+          console.error("Error fetching event data:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchEventData();
+    }, [postId]);
+  
+  
+    if (!eventData) {
+      return <div>Event not found</div>;
+    }
+  
+    // Access event data and venue capacity
+    const { venueId } = eventData;
+    const venueCapacity = venueId ? venueId.capacity : 0;
+
+  const handleSavePost = async () => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:6001/save/${postId}`,
+        { userId: currentUserId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      dispatch(updateSavedPosts(response.data.savedPosts));
+      setIsSaved(!isSaved);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:6001/posts/${postId}/like`,
+        { userId: currentUserId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLikeCount(response.data.likesCount);
+      setIsLiked(!isLiked);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAttend = async () => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:6001/posts/${postId}/attend`,
+        { userId: currentUserId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setIsAttending(!isAttending);
+      setPost(response.data);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSaveEdits = async () => {
+    let updatedFields = { description: editDescription };
     if (post.type === "event") {
       updatedFields = {
         ...updatedFields,
@@ -102,9 +200,6 @@ const PostDetails = () => {
         },
         body: JSON.stringify(updatedFields),
       });
-      if (!response.ok) {
-        throw new Error("Failed to update post");
-      }
       const updatedPost = await response.json();
       setPost(updatedPost);
       setIsEditing(false);
@@ -127,6 +222,16 @@ const PostDetails = () => {
   return (
     <Box maxWidth={600} mx="auto" mt={4} p={2}>
       <Card>
+        {/* Profile header */}
+        <Box p={2}>
+          <Friend
+            friendId={post.userId}
+            name={`${post.firstName} ${post.lastName}`}
+            subtitle={post.location}
+            userPicturePath={post.userPicturePath}
+          />
+        </Box>
+
         {post.picturePath && (
           <CardMedia
             component="img"
@@ -135,11 +240,12 @@ const PostDetails = () => {
             alt={post.description}
           />
         )}
+
         <CardContent>
-          {isEditing ?
-           (
+          {isEditing ? (
             <>
-              {/* Editable description */}
+              {" "}
+              {/* Editing form */}
               <TextField
                 fullWidth
                 multiline
@@ -209,7 +315,7 @@ const PostDetails = () => {
                 </>
               )}
               <Box sx={{ display: "flex", gap: 2 }}>
-                <Button variant="contained" onClick={handleSave}>
+                <Button variant="contained" onClick={handleSaveEdits}>
                   Save
                 </Button>
                 <Button variant="outlined" onClick={() => setIsEditing(false)}>
@@ -219,14 +325,17 @@ const PostDetails = () => {
             </>
           ) : (
             <>
+              {" "}
+              {/* View mode */}
               {post.type === "event" ? (
                 <>
+                  {" "}
+                  {/* Event details */}
                   <Typography
                     variant="body1"
                     color="textSecondary"
                     gutterBottom
-                  
-                    dangerouslySetInnerHTML={{ __html:post.about}}
+                    dangerouslySetInnerHTML={{ __html: post.about }}
                   />
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="h6">What You'll Learn</Typography>
@@ -234,8 +343,7 @@ const PostDetails = () => {
                     variant="body2"
                     color="textSecondary"
                     gutterBottom
-                  
-                    dangerouslySetInnerHTML={{ __html:post.whatYoullLearn}}
+                    dangerouslySetInnerHTML={{ __html: post.whatYoullLearn }}
                   />
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body2">
@@ -262,7 +370,58 @@ const PostDetails = () => {
           )}
         </CardContent>
 
-        {/* Only show the Edit button if the logged in user created the post */}
+        {/* Widget toolbar */}
+        {!isEditing && (
+          <Box sx={{ p: 2 }}>
+            <FlexBetween>
+              <FlexBetween gap="1rem">
+                <FlexBetween gap="0.3rem">
+                  <IconButton onClick={handleLike}>
+                    {isLiked ? (
+                      <FavoriteOutlined />
+                    ) : (
+                      <FavoriteBorderOutlined />
+                    )}
+                  </IconButton>
+                  <Typography>{likeCount}</Typography>
+                </FlexBetween>
+                <FlexBetween gap="0.3rem">
+                  <IconButton onClick={() => setIsComments(!isComments)}>
+                    <ChatBubbleOutlineOutlined />
+                  </IconButton>
+                  <Typography>{post.comments?.length || 0}</Typography>
+                </FlexBetween>
+                {post.type === "event" && (
+                  <>
+                    <Button
+                      variant="contained"
+                      color={isAttending ? "success" : "primary"}
+                      startIcon={<EventAvailableOutlined />}
+                      onClick={handleAttend}
+                      disabled={
+                        !isAttending && post.attendees.length >= venueCapacity
+                      }
+                    >
+                      {!isAttending && post.attendees.length >= venueCapacity
+                        ? "Event Full"
+                        : isAttending
+                        ? "Attending"
+                        : "Attend Event"}
+                    </Button>
+                    <Typography variant="caption">
+                      {post.attendees.length} / {venueCapacity} Attending
+                    </Typography>
+                  </>
+                )}
+              </FlexBetween>
+              <IconButton onClick={handleSavePost}>
+                {isSaved ? <BookmarkOutlined /> : <BookmarkBorderOutlined />}
+              </IconButton>
+            </FlexBetween>
+          </Box>
+        )}
+
+        {/* Edit button */}
         {!isEditing && post.userId === currentUserId && (
           <Box sx={{ p: 2, textAlign: "right" }}>
             <Button variant="outlined" onClick={() => setIsEditing(true)}>
@@ -273,9 +432,6 @@ const PostDetails = () => {
       </Card>
     </Box>
   );
-  {
-    /* SummaryCard goes here */
-  }
 };
 
 export default PostDetails;
