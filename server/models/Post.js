@@ -72,6 +72,15 @@ const postSchema = new mongoose.Schema(
         ref: "User" 
       }
     ],
+    presentCount: {
+  type: Number,
+  default: 0,
+},
+attendanceConfirmed: {
+  type: Boolean,
+  default: false,
+},
+
     likes: { 
       type: Map, 
       of: Boolean 

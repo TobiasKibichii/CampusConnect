@@ -16,9 +16,8 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        // Update Redux state with the saved posts
         dispatch(setPosts({ posts: response.data }));
-        console.log(response.data)
+        console.log(response.data);
       })
       .catch((err) => {
         console.error("Error fetching saved items:", err);
@@ -28,7 +27,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
   console.log("Redux posts:", posts);
 
   return (
-    <>
+    <div style={{ maxWidth: "700px", margin: "0 auto", padding: "1rem" }}>
       {posts?.map(
         ({
           _id,
@@ -57,14 +56,14 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
             userPicturePath={userPicturePath}
             likes={likes}
             comments={comments}
-            type={type} // Pass type
+            type={type}
             eventDate={eventDate}
             eventLocation={eventLocation}
             attendees={attendees}
           />
         )
       )}
-    </>
+    </div>
   );
 };
 

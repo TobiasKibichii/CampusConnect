@@ -117,19 +117,29 @@ const LandingPage = () => {
           </Typography>
           <FlexBetween gap="1rem">
             <Button color="inherit" onClick={() => setActiveSection("about")}>
-              About
+              <Typography
+                sx={{ cursor: "pointer", fontWeight: "bold", color: lightBlue }}
+              >
+                About
+              </Typography>
             </Button>
             <Button
               color="inherit"
               onClick={() => setActiveSection("features")}
             >
-              Features
+              <Typography
+                sx={{ cursor: "pointer", fontWeight: "bold", color: lightBlue }}
+              >
+                Features
+              </Typography>
             </Button>
-            <Button color="inherit" onClick={() => navigate("/contact")}>
-              Contact
-            </Button>
+
             <Button color="inherit" onClick={() => navigate("/login")}>
-              Login
+              <Typography
+                sx={{ cursor: "pointer", fontWeight: "bold", color: lightBlue }}
+              >
+                Login
+              </Typography>
             </Button>
           </FlexBetween>
         </Toolbar>

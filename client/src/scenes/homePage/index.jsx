@@ -23,7 +23,7 @@ import DateFilteredEventsWidget from "scenes/widgets/DateFilteredEventsWidget";
 
 const HomePage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
-  const { _id, picturePath } = useSelector((state) => state.user);
+  const { _id, userPicturePath } = useSelector((state) => state.user);
 
   // State for post filtering
   const [postFilter, setPostFilter] = useState("all"); // Default to "All Posts"
@@ -38,7 +38,7 @@ const HomePage = () => {
         justifyContent="space-between"
       >
         <Box flexBasis={isNonMobileScreens ? "26%" : undefined}>
-          <UserWidget userId={_id} picturePath={picturePath} />
+          <UserWidget userId={_id} picturePath={userPicturePath} />
           {/* New Saved Preview Widget placed below the UserWidget */}
           <SavedPreviewWidget userId={_id} />
           <DateFilteredEventsWidget />

@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Attendance from "./Attendance";
 
 const EditorDashboard = () => {
   const token = useSelector((state) => state.token);
@@ -348,6 +349,7 @@ const EditorDashboard = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <Attendance/>
     </Box>
   );
 };

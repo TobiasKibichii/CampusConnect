@@ -286,7 +286,7 @@ const GroupWidget = () => {
 
       {/* Suggested Groups Section */}
       <Typography color={dark} variant="h6" mt="1rem">
-        Suggested Groups
+        Available Groups
       </Typography>
       {suggestedGroups && suggestedGroups.length > 0 ? (
         <List>

@@ -130,4 +130,47 @@ router.get('/venueCapacity/:postId', async (req, res) => {
 });
 
 
+// In routes/posts.js (or events.js)
+
+router.post("/:eventId/attendance", verifyToken, async (req, res) => {
+  try {
+    const { attendees } = req.body;
+    const { eventId } = req.params;
+    console.log(attendees, eventId)
+    const event = await Post.findById(eventId);
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    if (event.attendanceConfirmed)
+      return res
+        .status(400)
+        .json({ message: "Attendance already confirmed for this event." });
+
+    
+    event.presentCount = attendees.length;
+    event.attendanceConfirmed = true;
+
+    await event.save();
+
+    res.status(200).json({ message: "Attendance submitted successfully." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// In your posts route (e.g., GET /posts/editor/:editorId)
+router.get("/editor/:userId", verifyToken, async (req, res) => {
+  try {
+    const posts = await Post.find({
+      userId: req.params.userId,
+      type: "event", // ✅ Only events
+    }).populate("attendees", "firstName lastName");
+    res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 export default router;

@@ -23,6 +23,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import ReplyIcon from "@mui/icons-material/Reply";
+import { CheckCircleOutline } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import FlexBetween from "components/FlexBetween";
@@ -80,6 +81,7 @@ const PostWidget = ({
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
+  const loggedInUserRole = useSelector((state) => state.user.role);
   const savedPosts = useSelector((state) => state.user.savedPosts) || [];
   const isSaved = savedPosts
     .map((id) => id.toString())
@@ -119,7 +121,7 @@ const PostWidget = ({
   useEffect(() => {
     fetchComments();
   }, [postId, token]);
-
+ 
   useEffect(() => {
     const fetchEventData = async () => {
       try {
@@ -368,6 +370,12 @@ const PostWidget = ({
                   style={{ textDecoration: "none", color: main }}
                 >
                   {comment.userId?.firstName} {comment.userId?.lastName}
+                  {(loggedInUserRole === "editor" ||
+                    loggedInUserRole === "admin") && (
+                    <CheckCircleOutline
+                      sx={{ color: "blue", marginLeft: "8px" }}
+                    />
+                  )}
                 </Typography>
                 <Typography>{comment.content}</Typography>
                 <Typography variant="caption" color={main}>
@@ -420,7 +428,8 @@ const PostWidget = ({
               >
                 <ReplyIcon fontSize="small" />
               </Button>
-              {loggedInUserId === comment.userId?._id && (
+              {(loggedInUserId === comment.userId?._id ||
+                loggedInUserRole === "admin") && (
                 <>
                   <Button
                     onClick={() => {
@@ -496,11 +505,12 @@ const PostWidget = ({
             name={name}
             subtitle={location}
             userPicturePath={userPicturePath}
+            role={loggedInUserRole}
           />
         }
         <Box
           sx={{
-            border: "1px solid red",
+            border: "1px solid blue",
             p: 1,
             display: "flex",
             alignItems: "center",
@@ -511,7 +521,7 @@ const PostWidget = ({
             Posted on {new Date(createdAt).toLocaleString()}
           </Typography>
 
-          {loggedInUserId === postUserId._id && ( // Check if the logged-in user is the creator
+          {(loggedInUserId === postUserId._id || loggedInUserRole === "admin") && ( // Check if the logged-in user is the creator or an admin
             <Button
               onClick={handleDelete}
               variant="outlined"
@@ -653,11 +663,12 @@ const PostWidget = ({
         name={name}
         subtitle={location}
         userPicturePath={userPicturePath}
+        role={loggedInUserRole}
       />
 
       <Box
         sx={{
-          border: "1px solid red",
+          border: "1px solid blue",
           p: 1,
           display: "flex",
           alignItems: "center",
@@ -667,7 +678,7 @@ const PostWidget = ({
         <Typography variant="body2" color="primary">
           Posted on {new Date(createdAt).toLocaleString()}
         </Typography>
-        {loggedInUserId === postUserId._id && ( // Check if the logged-in user is the creator
+        {(loggedInUserId === postUserId._id || loggedInUserRole ==="admin") && ( // Check if the logged-in user is the creator
           <Button
             onClick={handleDelete}
             variant="outlined"

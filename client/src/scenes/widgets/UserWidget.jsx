@@ -3,7 +3,7 @@ import {
   EditOutlined,
   LocationOnOutlined,
   WorkOutlineOutlined,
-  ChatOutlined, // <-- Added ChatOutlined icon
+  ChatOutlined,
 } from "@mui/icons-material";
 import {
   Box,
@@ -18,6 +18,7 @@ import {
   Button,
   useTheme,
 } from "@mui/material";
+import { CheckCircleOutline } from "@mui/icons-material";
 import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
@@ -33,7 +34,7 @@ const UserWidget = ({ userId, picturePath }) => {
     lastName: "",
     location: "",
     occupation: "",
-    picturePath: "",
+    pictureFile: null, // File upload
   });
 
   const { palette } = useTheme();
@@ -44,8 +45,9 @@ const UserWidget = ({ userId, picturePath }) => {
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
 
-  const loggedInUserId = useSelector((state) => state.user?._id); // Logged-in user ID
-  const role = useSelector((state) => state.user?.role); // Logged-in user's role
+  const loggedInUserId = useSelector((state) => state.user?._id);
+  const loggedInUserRole = useSelector((state) => state.user.role);
+  const role = useSelector((state) => state.user?.role);
 
   const getUser = useCallback(async () => {
     try {
@@ -55,12 +57,13 @@ const UserWidget = ({ userId, picturePath }) => {
       });
       const data = await response.json();
       setUser(data);
+      
       setUpdatedUser({
         firstName: data.firstName,
         lastName: data.lastName,
         location: data.location || "",
         occupation: data.occupation || "",
-        picturePath: data.picturePath || "",
+        pictureFile: null,
       });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -77,15 +80,32 @@ const UserWidget = ({ userId, picturePath }) => {
     setUpdatedUser({ ...updatedUser, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUpdatedUser({ ...updatedUser, pictureFile: file });
+    }
+  };
+
   const handleUpdate = async () => {
     try {
+      const formData = new FormData();
+      formData.append("firstName", updatedUser.firstName);
+      formData.append("lastName", updatedUser.lastName);
+      formData.append("location", updatedUser.location);
+      formData.append("occupation", updatedUser.occupation);
+
+      if (updatedUser.pictureFile) {
+        formData.append("picture", updatedUser.pictureFile);
+      }
+      
+
       const response = await fetch(`http://localhost:6001/users/${userId}`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(updatedUser),
+        body: formData,
       });
 
       if (!response.ok) throw new Error("Failed to update profile");
@@ -108,10 +128,15 @@ const UserWidget = ({ userId, picturePath }) => {
           onClick={() => navigate(`/profile/${userId}`)}
           sx={{ cursor: "pointer" }}
         >
-          <UserImage image={picturePath} />
+          <UserImage image={user.picturePath} />
           <Box>
             <Typography variant="h4" color={dark} fontWeight="500">
-              {user.firstName} {user.lastName}
+              {user.firstName} {user.lastName}{" "}
+              {/* Display Checkmark for Editors */}
+              {/* Display checkmark next to the name if user is an editor */}
+              {loggedInUserRole === "editor" && (
+                <CheckCircleOutline sx={{ color: "blue", marginLeft: "8px" }} />
+              )}
             </Typography>
             <Typography color={medium}>
               {user.friends.length} friends
@@ -127,7 +152,7 @@ const UserWidget = ({ userId, picturePath }) => {
           >
             <ManageAccountsOutlined />
           </IconButton>
-          {/* Message Button - Navigates to messaging section */}
+          {/* Message Button */}
           {userId !== loggedInUserId && (
             <IconButton onClick={() => navigate(`/chat/${userId}`)}>
               <ChatOutlined sx={{ color: main }} />
@@ -145,49 +170,17 @@ const UserWidget = ({ userId, picturePath }) => {
           <Typography color={medium}>{user.location}</Typography>
         </Box>
         <Box display="flex" alignItems="center" gap="1rem">
-          <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
+          BIO
+          
           <Typography color={medium}>{user.occupation}</Typography>
         </Box>
+          
       </Box>
-
-      <Divider />
-
-      
 
       <Divider />
 
       {/* FOURTH ROW */}
-      <Box p="1rem 0">
-        <Typography fontSize="1rem" color={main} fontWeight="500" mb="1rem">
-          Social Profiles
-        </Typography>
-
-        <FlexBetween gap="1rem" mb="0.5rem">
-          <FlexBetween gap="1rem">
-            <img src="../assets/twitter.png" alt="twitter" />
-            <Box>
-              <Typography color={main} fontWeight="500">
-                Twitter
-              </Typography>
-              <Typography color={medium}>Social Network</Typography>
-            </Box>
-          </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
-        </FlexBetween>
-
-        <FlexBetween gap="1rem">
-          <FlexBetween gap="1rem">
-            <img src="../assets/linkedin.png" alt="linkedin" />
-            <Box>
-              <Typography color={main} fontWeight="500">
-                Linkedin
-              </Typography>
-              <Typography color={medium}>Network Platform</Typography>
-            </Box>
-          </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
-        </FlexBetween>
-      </Box>
+      
 
       {/* Profile Update Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)}>
@@ -219,20 +212,40 @@ const UserWidget = ({ userId, picturePath }) => {
           />
           <TextField
             fullWidth
-            label="Occupation"
+            label="Bio"
             name="occupation"
             value={updatedUser.occupation}
             onChange={handleChange}
             margin="dense"
           />
-          <TextField
-            fullWidth
-            label="Profile Picture URL"
-            name="picturePath"
-            value={updatedUser.picturePath}
-            onChange={handleChange}
-            margin="dense"
-          />
+
+          {/* Profile Picture Upload */}
+          <Box mt={2}>
+            {updatedUser.pictureFile && (
+              <Box mb={2} display="flex" justifyContent="center">
+                <img
+                  src={URL.createObjectURL(updatedUser.pictureFile)}
+                  alt="Selected"
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                  }}
+                />
+              </Box>
+            )}
+
+            <Button variant="contained" component="label" fullWidth>
+              Upload Profile Picture
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                name="picture"
+                onChange={handleFileChange}
+              />
+            </Button>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)} color="secondary">

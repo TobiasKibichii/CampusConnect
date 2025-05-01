@@ -6,13 +6,16 @@ import { useNavigate } from "react-router-dom";
 import { setFriends } from "state";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
+import { CheckCircleOutline } from "@mui/icons-material";
 
-const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
+const Friend = ({ friendId, name, subtitle, userPicturePath, role }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { _id } = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
   const friends = useSelector((state) => state.user.friends);
+  
+
 
   const { palette } = useTheme();
   const primaryLight = palette.primary.light;
@@ -75,6 +78,13 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
             }}
           >
             {name}
+            
+            {(role === "editor" ||
+                                role === "admin") && (
+                                <CheckCircleOutline
+                                  sx={{ color: "blue", marginLeft: "8px" }}
+                                  />
+            )}
           </Typography>
           <Typography color={medium} fontSize="0.75rem">
             {subtitle}

@@ -84,15 +84,25 @@ export const getUserFriends = async (req, res) => {
 
 export const updateUserProfile = async (req, res) => {
   try {
+    
     const { id } = req.params;
-    const updatedFields = req.body;
-    console.log(req.body)
+    const { firstName, lastName, location, occupation } = req.body;  // Destructure the body fields
+    let updatedFields = { firstName, lastName, location, occupation };
+
+    // Check if a file was uploaded
+    if (req.file) {
+      updatedFields.picturePath = req.file.filename;  // Store the file path in picturePath
+    }
+
+    console.log("kkk"+updatedFields.picturePath)    
+    // Update the user with the new fields
     const updatedUser = await User.findByIdAndUpdate(id, updatedFields, { new: true });
+
     res.status(200).json(updatedUser);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-}
+};
 
 /* UPDATE */
 export const addRemoveFriend = async (req, res) => {

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { setPosts } from "state"; // Using existing posts slice
 import PostWidget from "scenes/widgets/PostWidget";
+import { Box } from "@mui/material"; // import Box for layout
 
 const RegisteredEventsWidget = () => {
   const dispatch = useDispatch();
@@ -16,7 +17,6 @@ const RegisteredEventsWidget = () => {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        // Dispatch the fetched events into the Redux posts slice
         dispatch(setPosts({ posts: response.data }));
         console.log("Registered events fetched:", response.data);
       })
@@ -26,7 +26,13 @@ const RegisteredEventsWidget = () => {
   }, [token, dispatch]);
 
   return (
-    <>
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center" // center horizontally
+      gap={2} // space between events
+      mt={2}
+    >
       {posts?.map(
         ({
           _id,
@@ -58,7 +64,7 @@ const RegisteredEventsWidget = () => {
             userPicturePath={userPicturePath}
             likes={likes}
             comments={comments}
-            type={type} // "event" in this case
+            type={type}
             eventDate={eventDate}
             eventTimeFrom={eventTimeFrom}
             eventTimeTo={eventTimeTo}
@@ -68,7 +74,7 @@ const RegisteredEventsWidget = () => {
           />
         )
       )}
-    </>
+    </Box>
   );
 };
 

@@ -11,16 +11,13 @@ import {
 } from "@mui/material";
 import { useParams, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import io from "socket.io-client";
 import WidgetWrapper from "components/WidgetWrapper";
-import FlexBetween from "components/FlexBetween";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ReplyIcon from "@mui/icons-material/Reply";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
-// Helper function to format 'time ago'
 const formatTimeAgo = (timestamp) => {
   const now = new Date();
   const past = new Date(timestamp);
@@ -45,6 +42,7 @@ const GroupMessages = () => {
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
 
+  const [groupName, setGroupName] = useState("");
   const [groupDetails, setGroupDetails] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessageText, setNewMessageText] = useState("");
@@ -55,9 +53,26 @@ const GroupMessages = () => {
   const [expandedMessage, setExpandedMessage] = useState({});
 
   const messagesEndRef = useRef(null);
-  const socketRef = useRef(null);
 
-  // Fetch group details and messages
+  useEffect(() => {
+    const fetchGroupName = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:6001/groups/find?groupId=${groupId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await res.json();
+        setGroupName(data.name);
+      } catch (error) {
+        console.error("Error fetching group name:", error);
+      }
+    };
+
+    fetchGroupName();
+  }, [groupId, token]);
+
   useEffect(() => {
     fetch(`http://localhost:6001/groupMessages/${groupId}/messages`, {
       headers: {
@@ -81,8 +96,6 @@ const GroupMessages = () => {
       });
   }, [groupId, token]);
 
-
-  // Auto-scroll
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -114,7 +127,6 @@ const GroupMessages = () => {
 
   const submitReply = async (parentMessage) => {
     if (!replyText.trim()) return;
-
     try {
       const res = await fetch(
         `http://localhost:6001/groupMessages/${groupId}/messages`,
@@ -130,18 +142,8 @@ const GroupMessages = () => {
           }),
         }
       );
-
-      
-
-      // Emit the reply to group via Socket.io
-      console.log("bbbbbbb")
-      console.log("bbbbbbb")
-    
-
-
       if (!res.ok) throw new Error("Failed to send reply");
       const data = await res.json();
-
       setMessages((prev) => [...prev, data.message]);
       setReplyingTo(null);
       setReplyText("");
@@ -149,7 +151,6 @@ const GroupMessages = () => {
       console.error("Error sending reply:", err);
     }
   };
-
 
   const toggleMessageExpansion = (id) =>
     setExpandedMessage((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -249,35 +250,42 @@ const GroupMessages = () => {
     );
 
   return (
-    <WidgetWrapper m="2rem 0">
-      {/* Group Header */}
-      <Box mb="1rem">
-        <Typography variant="h5" color={dark} fontWeight="bold">
-          {groupDetails?.name || "Group Chat"}
-        </Typography>
-      </Box>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="90vh"
+      bgcolor={palette.background.default}
+    >
+      <WidgetWrapper width="600px" p="2rem">
+        <Box mb="1rem" textAlign="center">
+          <Typography variant="h4" color={dark} fontWeight="bold">
+            {groupName || "Group Chat"}
+          </Typography>
+        </Box>
 
-      {/* Render messages */}
-      <Box>
-        {messages
-          .filter((m) => !m.parentMessageId)
-          .map((msg) => renderMessage(msg))}
-      </Box>
-      <Box ref={messagesEndRef} />
+        {/* Messages */}
+        <Box>
+          {messages
+            .filter((m) => !m.parentMessageId)
+            .map((msg) => renderMessage(msg))}
+        </Box>
+        <Box ref={messagesEndRef} />
 
-      {/* New message input */}
-      <Box mt="1rem">
-        <TextField
-          fullWidth
-          placeholder="Type your message..."
-          value={newMessageText}
-          onChange={(e) => setNewMessageText(e.target.value)}
-        />
-        <Button onClick={submitNewMessage} size="small">
-          Send
-        </Button>
-      </Box>
-    </WidgetWrapper>
+        {/* Input */}
+        <Box mt="1rem">
+          <TextField
+            fullWidth
+            placeholder="Type your message..."
+            value={newMessageText}
+            onChange={(e) => setNewMessageText(e.target.value)}
+          />
+          <Button onClick={submitNewMessage} size="small" sx={{ mt: "0.5rem" }}>
+            Send
+          </Button>
+        </Box>
+      </WidgetWrapper>
+    </Box>
   );
 };
 
