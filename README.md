@@ -1,3 +1,4 @@
+
 <h2>🎓 Campus Connect</h2>
 <p><strong>Student Social & Engagement Platform with Intelligent Recommendations</strong></p>
 
@@ -24,3 +25,31 @@
   <li>🧠 Personalized Recommendations — Content suggestions based on interests and engagement patterns.</li>
   <li>🧩 Extensible AI Features — Designed to support chatbots and student support assistants.</li>
 </ul>
+
+## 🎥 Demo Video
+
+<video width="100%" controls>
+  <source src="screenshots/campus-connect-demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+
+<p><strong>🖼️ Screenshots</strong></p>
+
+   <p>Landing Page </p>
+  <img src="screenshots/Screenshot (283).png" alt="Dashboard Overview" title ='Landing Page' style="width:600px; " />
+   <p>Homepage 1</p>
+  <img src="screenshots/Screenshot (284).png" alt="Dashboard Overview"   style="width:600px; " />
+  <p>Homepage 2</p>
+  <img src="screenshots/Screenshot (285).png" alt="Dashboard Overview"  style="width:600px;" />
+  <p>View Post/Event Page</p>
+  <img src="screenshots/Screenshot (286).png" alt="Dashboard Overview"   style="width:600px; " />
+  <p>Homepage 3</p>
+  <img src="screenshots/Screenshot (287).png" alt="Dashboard Overview"   style="width:600px; " />
+  <p>Create Post/Event Page</p>
+  <img src="screenshots/Screenshot (288).png" alt="Dashboard Overview"   style="width:600px; "/>
+  
+
+
+
+
