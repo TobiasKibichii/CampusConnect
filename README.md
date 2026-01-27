@@ -8,13 +8,13 @@
 
 <p><strong>💻 Tech Stack</strong></p>
 <ul>
-  <li>Frontend: React</li>
-  <li>Backend: Node.js, Express.js</li>
-  <li>Database: MongoDB</li>
-  <li>Authentication: JWT</li>
-  <li>Media Storage: Cloudinary</li>
-  <li>AI Layer: Recommendation engine (interest & interaction-based)</li>
-  <li>Architecture: MERN (Modular, API-driven)</li>
+  <li>⚛️ Frontend: React</li>
+  <li>🟢 Backend: Node.js, Express.js</li>
+  <li>💾 Database: MongoDB</li>
+  <li>🔐 Authentication: JWT</li>
+  <li>☁️ Media Storage: Cloudinary</li>
+  <li>🤖 AI Layer: Recommendation engine (interest & interaction-based)</li>
+  <li>🛠️ Architecture: MERN (Modular, API-driven)</li>
 </ul>
 
 <p><strong>⚙️ Core Functionalities</strong></p>
@@ -26,7 +26,7 @@
   <li>🧩 Extensible AI Features — Designed to support chatbots and student support assistants.</li>
 </ul>
 
-## 🎥 Demo Video
+<p> <strong>🎥 Demo Video </strong> </p>
 
 <video width="100%" controls>
   <source src="screenshots/campus-connect-demo.mp4" type="video/mp4">
@@ -37,18 +37,27 @@
 <p><strong>🖼️ Screenshots</strong></p>
 
    <p>Landing Page </p>
-  <img src="screenshots/Screenshot (283).png" alt="Dashboard Overview" title ='Landing Page' style="width:600px; " />
+  <img src="screenshots/Screenshot (283).png" alt="Dashboard Overview" title ='Landing Page' style="width:800px; " />
    <p>Homepage 1</p>
-  <img src="screenshots/Screenshot (284).png" alt="Dashboard Overview"   style="width:600px; " />
+  <img src="screenshots/Screenshot (284).png" alt="Dashboard Overview"  title ='Homepage 1' style="width:800px; " />
   <p>Homepage 2</p>
-  <img src="screenshots/Screenshot (285).png" alt="Dashboard Overview"  style="width:600px;" />
+  <img src="screenshots/Screenshot (285).png" alt="Dashboard Overview"  title='Home Page 2' style="width:800px;" />
   <p>View Post/Event Page</p>
-  <img src="screenshots/Screenshot (286).png" alt="Dashboard Overview"   style="width:600px; " />
+  <img src="screenshots/Screenshot (286).png" alt="Dashboard Overview"  title ='View Post/Event Page'  style="width:800px; " />
   <p>Homepage 3</p>
-  <img src="screenshots/Screenshot (287).png" alt="Dashboard Overview"   style="width:600px; " />
+  <img src="screenshots/Screenshot (287).png" alt="Dashboard Overview" title='Homepage 3'  style="width:800px; " />
   <p>Create Post/Event Page</p>
-  <img src="screenshots/Screenshot (288).png" alt="Dashboard Overview"   style="width:600px; "/>
+  <img src="screenshots/Screenshot (288).png" alt="Dashboard Overview" title='Create Post/Event Page'  style="width:800px; "/>
+  <p>Admin Dashboard 1</p>
+  <img src="screenshots/Screenshot (292).png" alt="Dashboard Overview"  title='Admin Dashboard 1' style="width:800px; "/>
+  <p>Admin Dashboard 2</p>
+  <img src="screenshots/Screenshot (293).png" alt="Dashboard Overview"   title='Admin Dashboard 2' style="width:800px; "/>
+  <p>Admin Dashboard 3</p>
+  <img src="screenshots/Screenshot (294).png" alt="Dashboard Overview"  title='Admin Dashboard 3' style="width:800px; "/>
+  <p>Editor Dashboard</p>
+  <img src="screenshots/Screenshot (295).png" alt="Dashboard Overview"  title='Editor Dashboard' style="width:800px; "/>
   
+
 
 
 
