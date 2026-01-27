@@ -27,11 +27,7 @@
 </ul>
 
 <p> <strong>🎥 Demo Video </strong> </p>
-
-<video width="100%" controls>
-  <source src="screenshots/campus-connect-demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+<p><a href="https://youtu.be/rxoIkPKUNwk">YouTube Link</a></p>
 
 
 <p><strong>🖼️ Screenshots</strong></p>
@@ -57,6 +53,7 @@
   <p>Editor Dashboard</p>
   <img src="screenshots/Screenshot (295).png" alt="Dashboard Overview"  title='Editor Dashboard' style="width:800px; "/>
   
+
 
 
 
