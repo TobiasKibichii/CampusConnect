@@ -43,7 +43,7 @@ const FollowEditorsPage = () => {
           "http://localhost:6001/users/editors",
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         setEditors(response.data);
       } catch (err) {
@@ -74,7 +74,7 @@ const FollowEditorsPage = () => {
       await axios.put(
         "http://localhost:6001/users/followEditors",
         { userId: user._id, editors: selectedEditors },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       enqueueSnackbar("Editors followed successfully!", { variant: "success" });
@@ -89,7 +89,7 @@ const FollowEditorsPage = () => {
   return (
     <Box p="2rem">
       <Typography variant="h4" mb="1rem">
-        Follow at least 5 editors
+        Follow at least 5 University Groups/Clubs
       </Typography>
 
       {loading ? (
@@ -97,7 +97,7 @@ const FollowEditorsPage = () => {
       ) : (
         <>
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel id="editors-label">Select Editors</InputLabel>
+            <InputLabel id="editors-label">Select Groups</InputLabel>
             <Select
               labelId="editors-label"
               multiple
