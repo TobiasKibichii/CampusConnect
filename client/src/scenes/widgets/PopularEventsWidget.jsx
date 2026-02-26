@@ -18,29 +18,27 @@ const PopularEventsWidget = () => {
   const eventsPerPage = 10;
   const navigate = useNavigate();
   const [showFullText, setShowFullText] = useState(false);
-  
-  
-    const stripHtmlAndTrim = (html, wordLimit = 10) => {
-      const plainText = html.replace(/<[^>]+>/g, ""); // remove HTML tags
-      const words = plainText.trim().split(/\s+/);
-      if (words.length <= wordLimit) return plainText;
-      return words.slice(0, wordLimit).join(" ") + "...";
-    };
-  
+
+  const stripHtmlAndTrim = (html, wordLimit = 10) => {
+    const plainText = html.replace(/<[^>]+>/g, ""); // remove HTML tags
+    const words = plainText.trim().split(/\s+/);
+    if (words.length <= wordLimit) return plainText;
+    return words.slice(0, wordLimit).join(" ") + "...";
+  };
 
   useEffect(() => {
     const fetchPopularEvents = async () => {
       try {
         // Assuming this endpoint returns events sorted by like count (descending)
         const response = await fetch(
-          "http://localhost:6001/posts/popularEvents",
+          "https://campusconnect-backend.onrender.com/posts/popularEvents",
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         const data = await response.json();
         setPopularEvents(data.events);
-        console.log(data.events)
+        console.log(data.events);
       } catch (error) {
         console.error("Error fetching popular events:", error);
       }
@@ -57,7 +55,7 @@ const PopularEventsWidget = () => {
   const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
   const currentEvents = popularEvents.slice(
     indexOfFirstEvent,
-    indexOfLastEvent
+    indexOfLastEvent,
   );
 
   const handlePageChange = (page) => {
@@ -113,28 +111,28 @@ const PopularEventsWidget = () => {
               )}
               <ListItemText
                 primary={
-                                  <>
-                                    {showFullText ? (
-                                      <span
-                                        dangerouslySetInnerHTML={{ __html: event.description }}
-                                      />
-                                    ) : (
-                                      stripHtmlAndTrim(event.description)
-                                    )}
-                                    {event.description.replace(/<[^>]+>/g, "").split(" ")
-                                      .length > 10 && (
-                                      <Typography
-                                        variant="body2"
-                                        color="primary"
-                                        component="span"
-                                        sx={{ cursor: "pointer", ml: 1 }}
-                                        onClick={() => setShowFullText(!showFullText)}
-                                      >
-                                        {showFullText ? " Show less" : " Show more"}
-                                      </Typography>
-                                    )}
-                                  </>
-                                }
+                  <>
+                    {showFullText ? (
+                      <span
+                        dangerouslySetInnerHTML={{ __html: event.description }}
+                      />
+                    ) : (
+                      stripHtmlAndTrim(event.description)
+                    )}
+                    {event.description.replace(/<[^>]+>/g, "").split(" ")
+                      .length > 10 && (
+                      <Typography
+                        variant="body2"
+                        color="primary"
+                        component="span"
+                        sx={{ cursor: "pointer", ml: 1 }}
+                        onClick={() => setShowFullText(!showFullText)}
+                      >
+                        {showFullText ? " Show less" : " Show more"}
+                      </Typography>
+                    )}
+                  </>
+                }
                 secondary={`Likes: ${Object.keys(event.likes || {}).length}`}
               />
             </ListItem>

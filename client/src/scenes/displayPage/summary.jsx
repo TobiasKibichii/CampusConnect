@@ -7,32 +7,31 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-const Summary = ({summary}) => {
+const Summary = ({ summary }) => {
   const { postId } = useParams();
   const [eventData, setEventData] = useState(null);
 
   const token = useSelector((state) => state.token);
 
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        const response = await axios.get(
+          `https://campusconnect-backend.onrender.com/events/${postId}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
 
-   useEffect(() => {
-      const fetchEventData = async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:6001/events/${postId}`, { headers: { Authorization: `Bearer ${token}` }}
-          );
-        
-          setEventData(response.data);
-          console.log(response.data)
-        } catch (error) {
-          console.error("Error fetching event:", error);
-        } 
-      };
-      
-      if (postId) {
-        fetchEventData();
+        setEventData(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching event:", error);
       }
-    }, [postId]);
+    };
 
+    if (postId) {
+      fetchEventData();
+    }
+  }, [postId]);
 
   return (
     <Paper elevation={3} sx={{ padding: "1rem", backgroundColor: "	#333333" }}>
@@ -49,9 +48,7 @@ const Summary = ({summary}) => {
         <Typography variant="subtitle2" color="textSecondary">
           What You'll Learn
         </Typography>
-        <Typography variant="body2">
-        
-        </Typography>
+        <Typography variant="body2"></Typography>
       </Box>
     </Paper>
   );

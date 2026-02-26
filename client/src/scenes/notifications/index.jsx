@@ -15,7 +15,6 @@ import {
 
 // Connect to the Socket.IO server (adjust the URL as needed)
 
-
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
   const user = useSelector((state) => state.user);
@@ -24,7 +23,7 @@ const NotificationsPage = () => {
   // Fetch notifications from the backend when the token changes
   useEffect(() => {
     axios
-      .get("http://localhost:6001/notifications", {
+      .get("https://campusconnect-backend.onrender.com/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
@@ -42,7 +41,7 @@ const NotificationsPage = () => {
     }
     socket.on("newNotification", (notification) => {
       // Prepend the new notification to the list
-       console.log("yebooooo")
+      console.log("yebooooo");
       setNotifications((prev) => [notification, ...prev]);
     });
     return () => {
@@ -50,29 +49,27 @@ const NotificationsPage = () => {
     };
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      console.log("📡 Joining socket room with user ID:", user._id);
+      socket.emit("join", user._id);
+    }
 
- useEffect(() => {
-   if (user) {
-     console.log("📡 Joining socket room with user ID:", user._id);
-     socket.emit("join", user._id);
-   }
+    socket.on("groupJoinApproved", (notification) => {
+      console.log(
+        "📨 Received groupJoinApproved socket notification:",
+        notification,
+      );
+      setNotifications((prev) => [notification, ...prev]);
+    });
 
-
-   socket.on("groupJoinApproved", (notification) => {
-     console.log(
-       "📨 Received groupJoinApproved socket notification:",
-       notification
-     );
-     setNotifications((prev) => [notification, ...prev]);
-   });
-
-   return () => {
-     console.log("🧹 Cleaning up socket listener for groupJoinApproved");
-     setTimeout(() =>{socket.off("groupJoinApproved");}, 500)
-   };
- }, [user]);
-
-
+    return () => {
+      console.log("🧹 Cleaning up socket listener for groupJoinApproved");
+      setTimeout(() => {
+        socket.off("groupJoinApproved");
+      }, 500);
+    };
+  }, [user]);
 
   return (
     <Box p="2rem">

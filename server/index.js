@@ -12,7 +12,6 @@ import { fileURLToPath } from "url";
 import cron from "node-cron";
 import { sendEmail } from "./utils/mailer.js";
 
-
 // Import your routes
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
@@ -84,17 +83,16 @@ app.use("/venues", venueRoutes);
 app.use("/events", eventRoutes);
 app.use("/messageNotifications", messageNotificationsRoutes);
 app.use("/api", aiSearchRoutes);
-app.use("/recommendations",recommendationRoutes)
+app.use("/recommendations", recommendationRoutes);
 app.use("/suggestedGroups", suggestedGroupsRoutes);
 app.use("/suggestedFriends", suggestedFriendsRoutes);
 app.use("/notes", notesRoutes);
-
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // Change this to your frontend URL if needed
+    origin: "https://campusconnect-frontend.onrender.com", // Change this to your frontend URL if needed
     methods: ["GET", "POST"],
   },
 });
@@ -126,7 +124,7 @@ io.on("connection", (socket) => {
       // Create a notification for the receiver.
       const newNotification = new MessageNotification({
         recipient: receiverId, // The recipient of the message.
-        sender: senderId,      // The sender of the message.
+        sender: senderId, // The sender of the message.
         message: text.slice(0, 50), // A snippet of the message.
         isRead: false,
       });
@@ -141,64 +139,55 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("sendGroupMessage", async ({ senderId, groupId, text }) => {
+    try {
+      // Save the group message
+      const newMessage = new Message({
+        sender: senderId,
+        groupId,
+        text,
+      });
+      console.log(newMessage);
+      await newMessage.save();
 
+      // Get all members of the group (excluding sender)
+      const group = await Group.findById(groupId).populate("members");
+      const recipients = group.members.filter(
+        (m) => m._id.toString() !== senderId,
+      );
 
-  
+      console.log("kkkkkkk");
+      console.log("kkkkkkk");
+      // Save a notification for each recipient
 
-socket.on("sendGroupMessage", async ({ senderId, groupId, text }) => {
-  try {
-    // Save the group message
-    const newMessage = new Message({
-      sender: senderId,
-      groupId,
-      text,
-    });
-    console.log(newMessage)
-    await newMessage.save();
+      const notifications = recipients.map((member) => ({
+        recipient: member._id,
+        groupId,
+        sender: senderId,
+        message: text.slice(0, 50),
+        isRead: false,
+      }));
+      console.log("📩 Notifications to insert:", notifications);
 
-    // Get all members of the group (excluding sender)
-    const group = await Group.findById(groupId).populate("members");
-    const recipients = group.members.filter(m => m._id.toString() !== senderId);
+      await GroupMessageNotification.insertMany(notifications);
 
+      // Emit to all group members (except sender)
+      recipients.forEach((member) => {
+        io.to(member._id.toString()).emit("receiveGroupMessage", {
+          groupId,
+          message: newMessage,
+        });
+      });
 
-    console.log("kkkkkkk")
-    console.log("kkkkkkk")
-    // Save a notification for each recipient
-
-    const notifications = recipients.map(member => ({
-      recipient: member._id,
-      groupId,
-      sender: senderId,
-      message: text.slice(0, 50),
-      isRead: false,
-    }));
-    console.log("📩 Notifications to insert:", notifications);
-
-    await GroupMessageNotification.insertMany(notifications);
-
-    // Emit to all group members (except sender)
-    recipients.forEach(member => {
-      io.to(member._id.toString()).emit("receiveGroupMessage", {
+      // Emit back to sender for confirmation
+      socket.emit("receiveGroupMessage", {
         groupId,
         message: newMessage,
       });
-    });
-
-    // Emit back to sender for confirmation
-    socket.emit("receiveGroupMessage", {
-      groupId,
-      message: newMessage,
-    });
-
-  } catch (err) {
-    console.error("Error sending group message:", err);
-  }
-});
-
-
-
-
-
+    } catch (err) {
+      console.error("Error sending group message:", err);
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
@@ -223,17 +212,24 @@ cron.schedule("* * * * *", async () => {
       type: "event",
       eventTimeTo: { $lt: now },
       processed: { $ne: true },
-      status: "Scheduled"
+      status: "Scheduled",
     });
 
     console.log(`Found ${endedEvents.length} ended event(s).`);
 
     for (const event of endedEvents) {
-      console.log(`Processing event ${event._id}: eventTo=${event.eventTo}, venueId=${event.venueId}`);
+      console.log(
+        `Processing event ${event._id}: eventTo=${event.eventTo}, venueId=${event.venueId}`,
+      );
       // Update the associated venue to mark it as available.
       if (event.venueId) {
-        const updatedVenue = await Venue.findByIdAndUpdate(event.venueId, { available: true });
-        console.log(`Venue ${event.venueId} updated to available:`, updatedVenue);
+        const updatedVenue = await Venue.findByIdAndUpdate(event.venueId, {
+          available: true,
+        });
+        console.log(
+          `Venue ${event.venueId} updated to available:`,
+          updatedVenue,
+        );
       } else {
         console.log(`Event ${event._id} has no venueId.`);
       }
@@ -241,12 +237,19 @@ cron.schedule("* * * * *", async () => {
       event.status = "Ended";
       event.processed = true;
       const updatedEvent = await event.save();
-      console.log(`Event ${event._id} updated: status=${updatedEvent.status}, processed=${updatedEvent.processed}`);
+      console.log(
+        `Event ${event._id} updated: status=${updatedEvent.status}, processed=${updatedEvent.processed}`,
+      );
     }
-    
-    console.log(`Scheduler completed at ${now.toLocaleTimeString()}: Updated ${endedEvents.length} event(s).`);
+
+    console.log(
+      `Scheduler completed at ${now.toLocaleTimeString()}: Updated ${endedEvents.length} event(s).`,
+    );
   } catch (error) {
-    console.error("Error updating event statuses and venue availability:", error);
+    console.error(
+      "Error updating event statuses and venue availability:",
+      error,
+    );
   }
 });
 
@@ -258,7 +261,7 @@ cron.schedule("* * * * *", async () => {
 
 import User from "./models/User.js";
 
-app.get("/test-email",  async (req, res) => {
+app.get("/test-email", async (req, res) => {
   try {
     const testUserId = new mongoose.Types.ObjectId("67f2ac615cfdcb59a0d6350a");
 
@@ -276,7 +279,11 @@ app.get("/test-email",  async (req, res) => {
       <p>Best,<br/>Campus Connect Team</p>
     `;
 
-    await sendEmail("kibichiitoby314@gmail.com", "📅 Test Email from CampusConnect", emailBody);
+    await sendEmail(
+      "kibichiitoby314@gmail.com",
+      "📅 Test Email from CampusConnect",
+      emailBody,
+    );
 
     res.send("✅ Test email sent to you successfully!");
   } catch (err) {
@@ -284,8 +291,6 @@ app.get("/test-email",  async (req, res) => {
     res.status(500).send("Failed to send test email.");
   }
 });
-
-
 
 cron.schedule("59 9 * * *", async () => {
   try {
@@ -336,13 +341,14 @@ cron.schedule("59 9 * * *", async () => {
   }
 });
 
-
-
 export { io };
 
 const PORT = process.env.PORT || 6001;
 mongoose
-  .connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })

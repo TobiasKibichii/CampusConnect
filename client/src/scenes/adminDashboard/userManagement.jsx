@@ -55,7 +55,7 @@ const UserManagement = () => {
   // Fetch users on component mount if current user is an admin
   useEffect(() => {
     if (currentUser?.role === "admin") {
-      fetch("http://localhost:6001/admin/users", {
+      fetch("https://campusconnect-backend.onrender.com/admin/users", {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -86,13 +86,16 @@ const UserManagement = () => {
 
   // Confirm deletion, then call the DELETE endpoint
   const confirmDeleteUser = () => {
-    fetch(`http://localhost:6001/admin/users/${selectedUserId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    fetch(
+      `https://campusconnect-backend.onrender.com/admin/users/${selectedUserId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
       .then((res) => {
         if (!res.ok) {
           throw new Error("Failed to delete user");
@@ -129,20 +132,23 @@ const UserManagement = () => {
 
   // Confirm user update by calling the PATCH endpoint
   const confirmEditUser = () => {
-    fetch(`http://localhost:6001/admin/users/${selectedUser._id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    fetch(
+      `https://campusconnect-backend.onrender.com/admin/users/${selectedUser._id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: selectedUser._id,
+          firstName: editFirstName,
+          lastName: editLastName,
+          email: editEmail,
+          role: editRole,
+        }),
       },
-      body: JSON.stringify({
-        userId: selectedUser._id,
-        firstName: editFirstName,
-        lastName: editLastName,
-        email: editEmail,
-        role: editRole,
-      }),
-    })
+    )
       .then((res) => {
         if (!res.ok) {
           throw new Error("Failed to update user");
@@ -152,8 +158,8 @@ const UserManagement = () => {
       .then((updatedUser) => {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user._id === updatedUser._id ? updatedUser : user
-          )
+            user._id === updatedUser._id ? updatedUser : user,
+          ),
         );
         setSnackbarMessage("User updated successfully");
         setSnackbarSeverity("success");

@@ -54,19 +54,22 @@ const PostDetails = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const [isAttending, setIsAttending] = useState(false);
-  
+
   // Helper to strip HTML
   const stripHtml = (text) => text.replace(/<[^>]+>/g, "");
 
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:6001/events/${postId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          `https://campusconnect-backend.onrender.com/events/${postId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const data = await response.json();
         setPost(data);
-        console.log(data)
+        console.log(data);
 
         // initialize editing fields
         setEditDescription(data.description || "");
@@ -76,20 +79,19 @@ const PostDetails = () => {
           setEditEventDate(
             data.eventDate
               ? new Date(data.eventDate).toISOString().substring(0, 10)
-              : ""
+              : "",
           );
           setEditEventTimeFrom(
             data.eventTimeFrom
               ? new Date(data.eventTimeFrom).toISOString().substring(11, 16)
-              : ""
+              : "",
           );
           setEditEventTimeTo(
             data.eventTimeTo
               ? new Date(data.eventTimeTo).toISOString().substring(11, 16)
-              : ""
+              : "",
           );
           setEditLocation(data.location || "");
-          
         }
 
         // initialize widget states
@@ -107,40 +109,38 @@ const PostDetails = () => {
     fetchPostDetails();
   }, [postId, token, currentUserId, savedPosts]);
 
-  
-    useEffect(() => {
-      const fetchEventData = async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:6001/posts/venueCapacity/${postId}`
-          );
-          console.log("kkk" + response.data)
-          setEventData(response.data); // The event data includes the populated venue
-        } catch (error) {
-          console.error("Error fetching event data:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-      fetchEventData();
-    }, [postId]);
-  
-  
-    if (!eventData) {
-      return <div>Event not found</div>;
-    }
-  
-    // Access event data and venue capacity
-    const { venueId } = eventData;
-    const venueCapacity = venueId ? venueId.capacity : 0;
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        const response = await axios.get(
+          `https://campusconnect-backend.onrender.com/posts/venueCapacity/${postId}`,
+        );
+        console.log("kkk" + response.data);
+        setEventData(response.data); // The event data includes the populated venue
+      } catch (error) {
+        console.error("Error fetching event data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEventData();
+  }, [postId]);
+
+  if (!eventData) {
+    return <div>Event not found</div>;
+  }
+
+  // Access event data and venue capacity
+  const { venueId } = eventData;
+  const venueCapacity = venueId ? venueId.capacity : 0;
 
   const handleSavePost = async () => {
     try {
       const response = await axios.patch(
-        `http://localhost:6001/save/${postId}`,
+        `https://campusconnect-backend.onrender.com/save/${postId}`,
         { userId: currentUserId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       dispatch(updateSavedPosts(response.data.savedPosts));
       setIsSaved(!isSaved);
@@ -152,9 +152,9 @@ const PostDetails = () => {
   const handleLike = async () => {
     try {
       const response = await axios.patch(
-        `http://localhost:6001/posts/${postId}/like`,
+        `https://campusconnect-backend.onrender.com/posts/${postId}/like`,
         { userId: currentUserId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setLikeCount(response.data.likesCount);
       setIsLiked(!isLiked);
@@ -166,13 +166,12 @@ const PostDetails = () => {
   const handleAttend = async () => {
     try {
       const response = await axios.patch(
-        `http://localhost:6001/posts/${postId}/attend`,
+        `https://campusconnect-backend.onrender.com/posts/${postId}/attend`,
         { userId: currentUserId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setIsAttending(!isAttending);
       setPost(response.data);
-
     } catch (err) {
       console.error(err);
     }
@@ -192,14 +191,17 @@ const PostDetails = () => {
       };
     }
     try {
-      const response = await fetch(`http://localhost:6001/events/${postId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `https://campusconnect-backend.onrender.com/events/${postId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedFields),
         },
-        body: JSON.stringify(updatedFields),
-      });
+      );
       const updatedPost = await response.json();
       setPost(updatedPost);
       setIsEditing(false);
@@ -405,8 +407,8 @@ const PostDetails = () => {
                       {!isAttending && post.attendees.length >= venueCapacity
                         ? "Event Full"
                         : isAttending
-                        ? "Attending"
-                        : "Attend Event"}
+                          ? "Attending"
+                          : "Attend Event"}
                     </Button>
                     <Typography variant="caption">
                       {post.attendees.length} / {venueCapacity} Attending

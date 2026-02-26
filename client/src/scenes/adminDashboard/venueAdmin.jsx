@@ -46,7 +46,7 @@ const VenueAdmin = () => {
   // Fetch venues from the backend when the component mounts
   useEffect(() => {
     if (currentUser?.role === "admin") {
-      fetch("http://localhost:6001/admin/venues", {
+      fetch("https://campusconnect-backend.onrender.com/admin/venues", {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -77,13 +77,16 @@ const VenueAdmin = () => {
 
   // Send DELETE request to backend and update state
   const confirmDeleteVenue = () => {
-    fetch(`http://localhost:6001/admin/venues/${selectedVenueId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    fetch(
+      `https://campusconnect-backend.onrender.com/admin/venues/${selectedVenueId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
       .then((res) => {
         if (!res.ok) {
           throw new Error("Failed to delete venue");
@@ -92,7 +95,7 @@ const VenueAdmin = () => {
       })
       .then(() => {
         setVenues((prev) =>
-          prev.filter((venue) => venue._id !== selectedVenueId)
+          prev.filter((venue) => venue._id !== selectedVenueId),
         );
         setSnackbarMessage("Venue deleted successfully");
         setSnackbarSeverity("success");
@@ -124,7 +127,7 @@ const VenueAdmin = () => {
       capacity: Number(newVenueCapacity),
     };
 
-    fetch("http://localhost:6001/admin/venues", {
+    fetch("https://campusconnect-backend.onrender.com/admin/venues", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

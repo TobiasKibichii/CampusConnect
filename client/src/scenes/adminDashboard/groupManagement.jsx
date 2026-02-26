@@ -41,7 +41,7 @@ const GroupManagement = () => {
   // Fetch groups from the backend when the component mounts
   useEffect(() => {
     if (currentUser?.role === "admin") {
-      fetch("http://localhost:6001/admin/groups", {
+      fetch("https://campusconnect-backend.onrender.com/admin/groups", {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -72,13 +72,16 @@ const GroupManagement = () => {
 
   // Send DELETE request to backend and update state
   const confirmDeleteGroup = () => {
-    fetch(`http://localhost:6001/admin/groups/${selectedGroupId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    fetch(
+      `https://campusconnect-backend.onrender.com/admin/groups/${selectedGroupId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
       .then((res) => {
         if (!res.ok) {
           throw new Error("Failed to delete group");
@@ -87,7 +90,7 @@ const GroupManagement = () => {
       })
       .then(() => {
         setGroups((prev) =>
-          prev.filter((group) => group._id !== selectedGroupId)
+          prev.filter((group) => group._id !== selectedGroupId),
         );
         setSnackbarMessage("Group deleted successfully");
         setSnackbarSeverity("success");

@@ -4,9 +4,12 @@ export const searchAI = async (req, res) => {
   const { query } = req.body;
 
   try {
-    const response = await axios.post("http://localhost:8000/search", {
-      question: query,
-    });
+    const response = await axios.post(
+      "https://campusconnect-search.onrender.com/search",
+      {
+        question: query,
+      },
+    );
 
     return res.status(200).json({ results: response.data.results });
   } catch (error) {
@@ -14,4 +17,3 @@ export const searchAI = async (req, res) => {
     return res.status(500).json({ message: "AI Search failed" });
   }
 };
-

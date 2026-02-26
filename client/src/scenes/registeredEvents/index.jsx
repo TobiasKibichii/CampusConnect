@@ -13,9 +13,12 @@ const RegisteredEventsWidget = () => {
   // Fetch registered events from the backend
   useEffect(() => {
     axios
-      .get("http://localhost:6001/events/getRegisteredEvents", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      .get(
+        "https://campusconnect-backend.onrender.com/events/getRegisteredEvents",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      )
       .then((response) => {
         dispatch(setPosts({ posts: response.data }));
         console.log("Registered events fetched:", response.data);
@@ -72,7 +75,7 @@ const RegisteredEventsWidget = () => {
             whatYoullLearn={whatYoullLearn}
             attendees={attendees}
           />
-        )
+        ),
       )}
     </Box>
   );

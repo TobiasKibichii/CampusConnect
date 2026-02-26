@@ -2,19 +2,18 @@ import express from "express";
 import { login, register } from "../controllers/auth.js";
 
 import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../cloudinary.js";
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets"); // storing in public/assets
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "users",
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
-
-
 
 const upload = multer({
   storage: storage,
@@ -27,7 +26,6 @@ const upload = multer({
     }
   },
 });
-
 
 router.post("/login", login);
 router.post("/register", upload.single("picture"), register);

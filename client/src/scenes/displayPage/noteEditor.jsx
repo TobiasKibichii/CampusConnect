@@ -16,10 +16,10 @@ const NoteEditor = ({ postId }) => {
     const fetchNote = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:6001/notes/notes/${postId}`,
+          `https://campusconnect-backend.onrender.com/notes/notes/${postId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         if (res.data.note) {
           setNoteContent(res.data.note.content);
@@ -43,21 +43,21 @@ const NoteEditor = ({ postId }) => {
       if (noteId) {
         // Update existing note
         await axios.put(
-          `http://localhost:6001/notes/notes/${noteId}`,
+          `https://campusconnect-backend.onrender.com/notes/notes/${noteId}`,
           { content: noteContent },
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         alert("Note updated!");
       } else {
         // Create new note
         const res = await axios.post(
-          `http://localhost:6001/notes/notes`,
+          `https://campusconnect-backend.onrender.com/notes/notes`,
           { postId, content: noteContent },
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         setNoteId(res.data._id);
         alert("Note created!");
@@ -70,9 +70,12 @@ const NoteEditor = ({ postId }) => {
   const deleteNote = async () => {
     if (!noteId) return;
     try {
-      await axios.delete(`http://localhost:6001/notes/notes/${noteId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `https://campusconnect-backend.onrender.com/notes/notes/${noteId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       setNoteContent("");
       setNoteId(null);
       alert("Note deleted!");

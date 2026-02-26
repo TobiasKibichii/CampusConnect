@@ -21,9 +21,12 @@ const ChatSection = () => {
   useEffect(() => {
     const fetchPartner = async () => {
       try {
-        const response = await fetch(`http://localhost:6001/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          `https://campusconnect-backend.onrender.com/users/${userId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const data = await response.json();
         setConversationPartner(data);
       } catch (err) {
@@ -36,7 +39,7 @@ const ChatSection = () => {
 
   // Setup Socket.io connection
   useEffect(() => {
-    socketRef.current = io("http://localhost:6001", {
+    socketRef.current = io("https://campusconnect-backend.onrender.com", {
       auth: { token },
     });
     // Join the current user's room
@@ -65,8 +68,8 @@ const ChatSection = () => {
     const fetchMessages = async () => {
       try {
         const response = await fetch(
-          `http://localhost:6001/messages?sender=${currentUser._id}&receiver=${userId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          `https://campusconnect-backend.onrender.com/messages?sender=${currentUser._id}&receiver=${userId}`,
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         const data = await response.json();
         setMessages(data);

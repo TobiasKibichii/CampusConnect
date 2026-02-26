@@ -51,13 +51,16 @@ const UserWidget = ({ userId, picturePath }) => {
 
   const getUser = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:6001/users/${userId}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `https://campusconnect-backend.onrender.com/users/${userId}`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       const data = await response.json();
       setUser(data);
-      
+
       setUpdatedUser({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -98,15 +101,17 @@ const UserWidget = ({ userId, picturePath }) => {
       if (updatedUser.pictureFile) {
         formData.append("picture", updatedUser.pictureFile);
       }
-      
 
-      const response = await fetch(`http://localhost:6001/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `https://campusconnect-backend.onrender.com/users/${userId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         },
-        body: formData,
-      });
+      );
 
       if (!response.ok) throw new Error("Failed to update profile");
 
@@ -171,16 +176,13 @@ const UserWidget = ({ userId, picturePath }) => {
         </Box>
         <Box display="flex" alignItems="center" gap="1rem">
           BIO
-          
           <Typography color={medium}>{user.occupation}</Typography>
         </Box>
-          
       </Box>
 
       <Divider />
 
       {/* FOURTH ROW */}
-      
 
       {/* Profile Update Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)}>

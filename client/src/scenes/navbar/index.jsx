@@ -83,50 +83,66 @@ const Navbar = () => {
 
   // Live search effect: calls two endpoints for posts and users on your AI backend (port 5000)
   useEffect(() => {
-   if (debouncedSearchQuery.trim() !== "") {
-     setLoading(true);
-     setSearchError("");
+    if (debouncedSearchQuery.trim() !== "") {
+      setLoading(true);
+      setSearchError("");
 
-     const postsEndpoint = `http://localhost:8000/search?query=${encodeURIComponent(
-       debouncedSearchQuery
-     )}&type=posts`;
-     const usersEndpoint = `http://localhost:8000/search?query=${encodeURIComponent(
-       debouncedSearchQuery
-     )}&type=users`;
+      const postsEndpoint = `hhttps://campusconnect-search.onrender.com/search?query=${encodeURIComponent(
+        debouncedSearchQuery,
+      )}&type=posts`;
+      const usersEndpoint = `hhttps://campusconnect-search.onrender.com/search?query=${encodeURIComponent(
+        debouncedSearchQuery,
+      )}&type=users`;
 
-     Promise.all([
-       axios.get(postsEndpoint, { headers: { /* … */ } }),
-       axios.get(usersEndpoint, { headers: { /* … */ } }),
-     ])
-       .then(([postsResponse, usersResponse]) => {
-      setLiveResults({
-        posts: postsResponse.data.results || [],
-        users: usersResponse.data.results || [],
-      });
-       setLiveResults({
-        posts: (postsResponse.data.results || []).map(r => ({ ...r, __type: "posts" })),
-         users: (usersResponse.data.results || []).map(u => ({ ...u, __type: "users" })),
-});
-         setLoading(false);
-         setOpen(true);
-       })
-       .catch((err) => { /* … */ });
-   } else {
-     setLiveResults({ posts: [], users: [] });
-     setOpen(false);
-   }
- }, [debouncedSearchQuery, token]);
+      Promise.all([
+        axios.get(postsEndpoint, {
+          headers: {
+            /* … */
+          },
+        }),
+        axios.get(usersEndpoint, {
+          headers: {
+            /* … */
+          },
+        }),
+      ])
+        .then(([postsResponse, usersResponse]) => {
+          setLiveResults({
+            posts: postsResponse.data.results || [],
+            users: usersResponse.data.results || [],
+          });
+          setLiveResults({
+            posts: (postsResponse.data.results || []).map((r) => ({
+              ...r,
+              __type: "posts",
+            })),
+            users: (usersResponse.data.results || []).map((u) => ({
+              ...u,
+              __type: "users",
+            })),
+          });
+          setLoading(false);
+          setOpen(true);
+        })
+        .catch((err) => {
+          /* … */
+        });
+    } else {
+      setLiveResults({ posts: [], users: [] });
+      setOpen(false);
+    }
+  }, [debouncedSearchQuery, token]);
 
- const handleResultClick = (result) => {
-  setOpen(false);
-  if (result.__type === "users") {
-    navigate(`/profile/${result._id}`);
-  } else {
-    // for your posts/events routes
-    // pick whichever you prefer: /posts or /events
-    navigate(`/posts/${result._id}`);
-  }
-};
+  const handleResultClick = (result) => {
+    setOpen(false);
+    if (result.__type === "users") {
+      navigate(`/profile/${result._id}`);
+    } else {
+      // for your posts/events routes
+      // pick whichever you prefer: /posts or /events
+      navigate(`/posts/${result._id}`);
+    }
+  };
 
   const handleSearch = () => {
     if (searchQuery.trim() !== "") {
@@ -138,11 +154,11 @@ const Navbar = () => {
     console.log("🚀 markAsRead HIT");
     try {
       await axios.put(
-        "http://localhost:6001/notifications/markAsRead",
+        "https://campusconnect-backend.onrender.com/notifications/markAsRead",
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setNotificationsCount(0);
     } catch (err) {
@@ -154,7 +170,7 @@ const Navbar = () => {
   useEffect(() => {
     if (token) {
       axios
-        .get("http://localhost:6001/notifications", {
+        .get("https://campusconnect-backend.onrender.com/notifications", {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((response) => {
@@ -171,9 +187,12 @@ const Navbar = () => {
   useEffect(() => {
     if (token) {
       axios
-        .get("http://localhost:6001/messageNotifications", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        .get(
+          "https://campusconnect-backend.onrender.com/messageNotifications",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        )
         .then((response) => {
           // Assuming response.data is an array of message notifications
           setMessageNotificationCount(response.data.length);

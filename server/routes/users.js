@@ -7,25 +7,21 @@ import {
   addRemoveFriend,
   updateUserProfile,
   getEditors,
-  followEditors
+  followEditors,
 } from "../controllers/users.js";
-import {  usersSearch } from "../controllers/search.js";
+import { usersSearch } from "../controllers/search.js";
 import { verifyToken } from "../middleware/auth.js";
 import multer from "multer";
 
 const router = express.Router();
 
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets"); // storing in public/assets
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "users",
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
-
-
 
 const upload = multer({
   storage: storage,
@@ -39,8 +35,6 @@ const upload = multer({
   },
 });
 
-
-
 router.get("/editors", getEditors);
 router.put("/followEditors", verifyToken, followEditors);
 
@@ -48,7 +42,7 @@ router.put("/followEditors", verifyToken, followEditors);
 router.get("/:id", verifyToken, getUser);
 router.get("/:id/friends", verifyToken, getUserFriends);
 
-router.patch("/:id", verifyToken,upload.single("picture"), updateUserProfile);
+router.patch("/:id", verifyToken, upload.single("picture"), updateUserProfile);
 
 /* UPDATE */
 router.patch("/:id/:friendId", verifyToken, addRemoveFriend);
@@ -56,7 +50,7 @@ router.patch("/:id/:friendId", verifyToken, addRemoveFriend);
 router.get("/:userId/profileImage", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select("picturePath");
-    console.log(user.picturePath)
+    console.log(user.picturePath);
     if (!user || !user.picturePath) {
       return res.status(404).json({ message: "Image not found" });
     }
@@ -67,10 +61,6 @@ router.get("/:userId/profileImage", async (req, res) => {
   }
 });
 
-
 router.get("/search", verifyToken, usersSearch);
-
-
-
 
 export default router;

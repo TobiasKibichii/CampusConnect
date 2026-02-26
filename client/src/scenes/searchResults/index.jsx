@@ -21,13 +21,13 @@ const SearchResults = () => {
       setError(null);
 
       // AI Search Request
-      const aiUrl = `http://localhost:5000/search?q=${encodeURIComponent(
-        query
+      const aiUrl = `https://campusconnect-search.onrender.com/search?q=${encodeURIComponent(
+        query,
       )}${role ? `&role=${encodeURIComponent(role)}` : ""}`;
 
       // User Search Request
-      const userUrl = `http://localhost:6001/api/search-users?q=${encodeURIComponent(
-        query
+      const userUrl = `https://campusconnect-backend.onrender.com/api/search-users?q=${encodeURIComponent(
+        query,
       )}${role ? `&role=${encodeURIComponent(role)}` : ""}`;
 
       // Perform both searches

@@ -13,11 +13,11 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
   const getUserPosts = useCallback(async () => {
     try {
       const response = await fetch(
-        `http://localhost:6001/posts/user/${userId}`,
+        `https://campusconnect-backend.onrender.com/posts/user/${userId}`,
         {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (!response.ok) throw new Error("Failed to fetch user posts");
       const data = await response.json();
@@ -29,7 +29,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
 
   // Fetch all posts (or filtered posts)
   const getPosts = useCallback(async () => {
-    let url = "http://localhost:6001/posts";
+    let url = "https://campusconnect-backend.onrender.com/posts";
     if (filter === "events") url += "?type=events";
     if (filter === "friends" && userId) url += `?type=friends&userId=${userId}`;
     try {
@@ -105,7 +105,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
             attendees={attendees}
             createdAt={createdAt}
           />
-        )
+        ),
       )}
       <Box display="flex" justifyContent="center" mt="1rem">
         <Pagination

@@ -6,7 +6,7 @@ import {
   List,
   ListItem,
   ListItemText,
-  Badge
+  Badge,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -27,7 +27,7 @@ const GroupWidget = () => {
   const token = useSelector((state) => state.token);
   const navigate = useNavigate();
   // Create a single socket instance – you may also want to extract this into a separate file
-  const socket = io("http://localhost:6001");
+  const socket = io("https://campusconnect-backend.onrender.com");
 
   // States for user's groups, suggested groups, loading state, input and errors
   const [userGroups, setUserGroups] = useState([]);
@@ -41,7 +41,7 @@ const GroupWidget = () => {
   // Helper: check if the user is already a member of a specific group.
   const isUserInGroup = (groupId) => {
     return userGroups.some(
-      (group) => group._id.toString() === groupId.toString()
+      (group) => group._id.toString() === groupId.toString(),
     );
   };
 
@@ -61,7 +61,7 @@ const GroupWidget = () => {
 
   // Fetch groups data from backend on mount
   useEffect(() => {
-    fetch("http://localhost:6001/groups", {
+    fetch("https://campusconnect-backend.onrender.com/groups", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -86,17 +86,18 @@ const GroupWidget = () => {
       });
   }, [token]);
 
-
-
   useEffect(() => {
     if (token) {
       axios
-        .get("http://localhost:6001/notifications/groupNotifications", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        .get(
+          "https://campusconnect-backend.onrender.com/notifications/groupNotifications",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        )
         .then((response) => {
           setGroupNotificationsCount(
-            response.data.filter((n) => !n.isRead).length
+            response.data.filter((n) => !n.isRead).length,
           );
         })
         .catch((err) => {
@@ -105,17 +106,15 @@ const GroupWidget = () => {
     }
   }, [token]);
 
-
-
   const markGroupNotificationsAsRead = async () => {
     console.log("📥 markGroupNotificationsAsRead HIT");
     try {
       await axios.put(
-        "http://localhost:6001/notifications/groupNotifications/markAsRead",
+        "https://campusconnect-backend.onrender.com/notifications/groupNotifications/markAsRead",
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setGroupNotificationsCount(0);
     } catch (err) {
@@ -123,13 +122,10 @@ const GroupWidget = () => {
     }
   };
 
-
-
-
   // Handler for creating a new group (for editors)
   const handleCreateGroup = (e) => {
     e.preventDefault();
-    fetch("http://localhost:6001/groups/postGroup", {
+    fetch("https://campusconnect-backend.onrender.com/groups/postGroup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -149,8 +145,8 @@ const GroupWidget = () => {
         // Optionally remove the new group from suggestions if present
         setSuggestedGroups((prev) =>
           prev.filter(
-            (group) => group._id.toString() !== data.group._id.toString()
-          )
+            (group) => group._id.toString() !== data.group._id.toString(),
+          ),
         );
         setGroupName("");
       })
@@ -164,14 +160,14 @@ const GroupWidget = () => {
   const handleJoinGroup = async (groupId) => {
     try {
       const response = await fetch(
-        `http://localhost:6001/groups/${groupId}/requestJoin`,
+        `https://campusconnect-backend.onrender.com/groups/${groupId}/requestJoin`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (!response.ok) {
         throw new Error("Error sending join request");
@@ -182,8 +178,8 @@ const GroupWidget = () => {
         prev.map((group) =>
           group._id.toString() === data.group._id.toString()
             ? { ...group, requested: true }
-            : group
-        )
+            : group,
+        ),
       );
       alert("Join request sent. Please wait for the group creator's approval.");
     } catch (err) {
@@ -204,10 +200,6 @@ const GroupWidget = () => {
       alert("You must be a member of this group to view messages.");
     }
   };
-
-
-  
-
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -240,17 +232,12 @@ const GroupWidget = () => {
                 button
                 onClick={() => handleOpenGroup(group._id)}
               >
-                <Badge
-                  badgeContent={groupNotificationsCount}
-                  color="error"
-                  
-                >
+                <Badge badgeContent={groupNotificationsCount} color="error">
                   <ListItemText
                     primary={group.name}
                     onClick={async () => {
                       console.log("🔔 Notification icon clicked");
                       await markGroupNotificationsAsRead();
-                      
                     }}
                   />
                 </Badge>

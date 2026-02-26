@@ -38,12 +38,15 @@ const SuggestedGroups = () => {
     const fetchUserGroups = async () => {
       if (token) {
         try {
-          const response = await fetch("http://localhost:6001/groups", {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+          const response = await fetch(
+            "https://campusconnect-backend.onrender.com/groups",
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
             },
-          });
+          );
           if (!response.ok) {
             throw new Error("Failed to fetch your groups");
           }
@@ -61,7 +64,7 @@ const SuggestedGroups = () => {
   // Helper to check if the current user is already a member of a group.
   const isUserInGroup = (groupId) => {
     return userGroups.some(
-      (group) => group._id.toString() === groupId.toString()
+      (group) => group._id.toString() === groupId.toString(),
     );
   };
 
@@ -69,14 +72,14 @@ const SuggestedGroups = () => {
   const handleJoinGroup = async (groupId) => {
     try {
       const response = await fetch(
-        `http://localhost:6001/groups/${groupId}/requestJoin`,
+        `https://campusconnect-backend.onrender.com/groups/${groupId}/requestJoin`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (!response.ok) {
         throw new Error("Error sending join request");
@@ -87,8 +90,8 @@ const SuggestedGroups = () => {
         prev.map((item) =>
           item.group._id.toString() === data.group._id.toString()
             ? { ...item, requested: true }
-            : item
-        )
+            : item,
+        ),
       );
       alert("Join request sent. Please wait for the group creator's approval.");
     } catch (err) {

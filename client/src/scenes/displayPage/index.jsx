@@ -24,8 +24,8 @@ const Index = () => {
     const fetchEventData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:6001/events/${postId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          `https://campusconnect-backend.onrender.com/events/${postId}`,
+          { headers: { Authorization: `Bearer ${token}` } },
         );
 
         setEventData(response.data); // Set event data
