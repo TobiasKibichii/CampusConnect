@@ -58,10 +58,10 @@ const GroupMessages = () => {
     const fetchGroupName = async () => {
       try {
         const res = await fetch(
-          `http://localhost:6001/groups/find?groupId=${groupId}`,
+          `https://campusconnect-backend.onrender.com/groups/find?groupId=${groupId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         const data = await res.json();
         setGroupName(data.name);
@@ -74,12 +74,15 @@ const GroupMessages = () => {
   }, [groupId, token]);
 
   useEffect(() => {
-    fetch(`http://localhost:6001/groupMessages/${groupId}/messages`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    fetch(
+      `https://campusconnect-backend.onrender.com/groupMessages/${groupId}/messages`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch group details");
         return res.json();
@@ -106,7 +109,7 @@ const GroupMessages = () => {
     if (!newMessageText.trim()) return;
     try {
       const res = await fetch(
-        `http://localhost:6001/groupMessages/${groupId}/messages`,
+        `https://campusconnect-backend.onrender.com/groupMessages/${groupId}/messages`,
         {
           method: "POST",
           headers: {
@@ -114,7 +117,7 @@ const GroupMessages = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ text: newMessageText, parentMessageId: null }),
-        }
+        },
       );
       if (!res.ok) throw new Error("Failed to send message");
       const data = await res.json();
@@ -129,7 +132,7 @@ const GroupMessages = () => {
     if (!replyText.trim()) return;
     try {
       const res = await fetch(
-        `http://localhost:6001/groupMessages/${groupId}/messages`,
+        `https://campusconnect-backend.onrender.com/groupMessages/${groupId}/messages`,
         {
           method: "POST",
           headers: {
@@ -140,7 +143,7 @@ const GroupMessages = () => {
             text: replyText,
             parentMessageId: parentMessage._id,
           }),
-        }
+        },
       );
       if (!res.ok) throw new Error("Failed to send reply");
       const data = await res.json();

@@ -21,12 +21,12 @@ const MessageNotifications = () => {
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        "http://localhost:6001/messages/messageNotifications",
+        "https://campusconnect-backend.onrender.com/messages/messageNotifications",
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       const data = await response.json();
       setNotifications(data);
@@ -39,16 +39,16 @@ const MessageNotifications = () => {
   const markNotificationsAsRead = async () => {
     try {
       const response = await fetch(
-        "http://localhost:6001/messageNotifications/markNotificationsRead",
+        "https://campusconnect-backend.onrender.com/messageNotifications/markNotificationsRead",
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
-      console.log(response.data)
+      console.log(response.data);
       if (!response.ok) {
         throw new Error("Failed to mark notifications as read");
       }
@@ -93,7 +93,7 @@ const MessageNotifications = () => {
               <Avatar
                 src={
                   notif.sender.picturePath
-                    ? `http://localhost:6001/assets/${notif.sender.picturePath}`
+                    ? `https://campusconnect-backend.onrender.com/assets/${notif.sender.picturePath}`
                     : ""
                 }
               />

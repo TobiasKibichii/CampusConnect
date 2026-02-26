@@ -16,22 +16,24 @@ const SummaryCard = ({ description, about, whatYoullLearn, type }) => {
       try {
         // Dynamically choose the text based on the `type` (event or post)
         const text = type === "event" ? about : description;
-      
-        const response = await fetch("http://127.0.0.1:5000/summarize", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+
+        const response = await fetch(
+          "https://campusconnect-summarizer.onrender.com/summarize",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ text }),
           },
-          body: JSON.stringify({ text }),
-        });
-       
+        );
+
         if (!response.ok) throw new Error("Failed to fetch summary");
 
         const data = await response.json();
         console.log(data);
         setSummary(data.summary);
-
       } catch (err) {
         setError(err.message || "Something went wrong");
       } finally {
@@ -45,12 +47,7 @@ const SummaryCard = ({ description, about, whatYoullLearn, type }) => {
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
 
-  return (
-    <Summary
-      summary={summary}
-      whatYoullLearn={whatYoullLearn}
-    />
-  );
+  return <Summary summary={summary} whatYoullLearn={whatYoullLearn} />;
 };
 
 export default SummaryCard;

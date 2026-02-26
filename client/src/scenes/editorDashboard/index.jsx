@@ -43,7 +43,7 @@ const EditorDashboard = () => {
 
   // Fetch group details on mount
   useEffect(() => {
-    fetch("http://localhost:6001/editor/group", {
+    fetch("https://campusconnect-backend.onrender.com/editor/group", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -67,7 +67,7 @@ const EditorDashboard = () => {
 
   // Handler to update group details
   const handleUpdateGroup = () => {
-    fetch("http://localhost:6001/editor/group", {
+    fetch("https://campusconnect-backend.onrender.com/editor/group", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -94,13 +94,16 @@ const EditorDashboard = () => {
 
   // Approve join request for a user
   const handleApproveJoin = (userId) => {
-    fetch(`http://localhost:6001/editor/group/approve-join/${userId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    fetch(
+      `https://campusconnect-backend.onrender.com/editor/group/approve-join/${userId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
       .then((res) => {
         if (!res.ok) throw new Error("Failed to approve join request");
         return res.json();
@@ -116,20 +119,20 @@ const EditorDashboard = () => {
         setSnackbarSeverity("error");
         setSnackbarOpen(true);
       });
-
-
-      
   };
 
   // Reject join request for a user
   const handleRejectJoin = (userId) => {
-    fetch(`http://localhost:6001/editor/group/reject-join/${userId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    fetch(
+      `https://campusconnect-backend.onrender.com/editor/group/reject-join/${userId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
       .then((res) => {
         if (!res.ok) throw new Error("Failed to reject join request");
         return res.json();
@@ -155,13 +158,16 @@ const EditorDashboard = () => {
 
   // Confirm removal of a group member
   const confirmRemoveMember = () => {
-    fetch(`http://localhost:6001/editor/group/members/${selectedMemberId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    fetch(
+      `https://campusconnect-backend.onrender.com/editor/group/members/${selectedMemberId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
-    })
+    )
       .then((res) => {
         if (!res.ok) throw new Error("Failed to remove member");
         return res.json();
@@ -349,7 +355,7 @@ const EditorDashboard = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-      <Attendance/>
+      <Attendance />
     </Box>
   );
 };

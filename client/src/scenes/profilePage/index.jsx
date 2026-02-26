@@ -13,22 +13,23 @@ const ProfilePage = () => {
 
   const token = useSelector((state) => state.token);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
-const params = useParams();
-const userId =
-  params.userId && typeof params.userId === "object"
-    ? params.userId.userId
-    : params.userId;
-console.log("Final extracted userId:", userId);
-console.log("Final extracted  yyyyy userId:", JSON.stringify(userId));
-
-
+  const params = useParams();
+  const userId =
+    params.userId && typeof params.userId === "object"
+      ? params.userId.userId
+      : params.userId;
+  console.log("Final extracted userId:", userId);
+  console.log("Final extracted  yyyyy userId:", JSON.stringify(userId));
 
   const getUser = async () => {
-    console.log(userId +" yyyyyyyy")
-    const response = await fetch(`http://localhost:6001/users/${userId}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    console.log(userId + " yyyyyyyy");
+    const response = await fetch(
+      `https://campusconnect-backend.onrender.com/users/${userId}`,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     const data = await response.json();
     setUser(data);
   };
@@ -41,7 +42,6 @@ console.log("Final extracted  yyyyy userId:", JSON.stringify(userId));
 
   return (
     <Box>
-      
       <Box
         width="100%"
         padding="2rem 6%"
@@ -60,7 +60,7 @@ console.log("Final extracted  yyyyy userId:", JSON.stringify(userId));
         >
           <MyPostWidget picturePath={user.picturePath} />
           <Box m="2rem 0" />
-          <PostsWidget userId={userId} isProfile ={true} />
+          <PostsWidget userId={userId} isProfile={true} />
         </Box>
       </Box>
     </Box>

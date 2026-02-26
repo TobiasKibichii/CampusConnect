@@ -95,20 +95,18 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
 
-  
-
   // Fetch comments from backend
   const fetchComments = async () => {
     try {
       const response = await fetch(
-        `http://localhost:6001/posts/${postId}/comments`,
+        `https://campusconnect-backend.onrender.com/posts/${postId}/comments`,
         {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       if (!response.ok) throw new Error("Failed to fetch comments");
       const data = await response.json();
@@ -121,14 +119,14 @@ const PostWidget = ({
   useEffect(() => {
     fetchComments();
   }, [postId, token]);
- 
+
   useEffect(() => {
     const fetchEventData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:6001/posts/venueCapacity/${postId}`
+          `https://campusconnect-backend.onrender.com/posts/venueCapacity/${postId}`,
         );
-        console.log("kkk" + response.data)
+        console.log("kkk" + response.data);
         setEventData(response.data); // The event data includes the populated venue
       } catch (error) {
         console.error("Error fetching event data:", error);
@@ -140,7 +138,6 @@ const PostWidget = ({
     fetchEventData();
   }, [postId]);
 
-
   if (!eventData) {
     return <div>Event not found</div>;
   }
@@ -151,22 +148,8 @@ const PostWidget = ({
 
   // Like Post/Event
   const patchLike = async () => {
-    const response = await fetch(`http://localhost:6001/posts/${postId}/like`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId: loggedInUserId }),
-    });
-    const updatedPost = await response.json();
-    dispatch(setPost({ post: updatedPost }));
-  };
-
-  // Attend Event
-  const toggleAttend = async () => {
     const response = await fetch(
-      `http://localhost:6001/posts/${postId}/attend`,
+      `https://campusconnect-backend.onrender.com/posts/${postId}/like`,
       {
         method: "PATCH",
         headers: {
@@ -174,7 +157,24 @@ const PostWidget = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId: loggedInUserId }),
-      }
+      },
+    );
+    const updatedPost = await response.json();
+    dispatch(setPost({ post: updatedPost }));
+  };
+
+  // Attend Event
+  const toggleAttend = async () => {
+    const response = await fetch(
+      `https://campusconnect-backend.onrender.com/posts/${postId}/attend`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: loggedInUserId }),
+      },
     );
     const updatedPost = await response.json();
     dispatch(setPost({ post: updatedPost }));
@@ -183,14 +183,17 @@ const PostWidget = ({
   // Toggle Save Post/Event
   const patchSave = async () => {
     try {
-      const response = await fetch(`http://localhost:6001/save/${postId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `https://campusconnect-backend.onrender.com/save/${postId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: loggedInUserId }),
         },
-        body: JSON.stringify({ userId: loggedInUserId }),
-      });
+      );
       const data = await response.json();
       dispatch(updateSavedPosts(data.savedPosts));
     } catch (error) {
@@ -203,7 +206,7 @@ const PostWidget = ({
     if (!replyText.trim()) return;
     try {
       const response = await fetch(
-        `http://localhost:6001/posts/${postId}/comments`,
+        `https://campusconnect-backend.onrender.com/posts/${postId}/comments`,
         {
           method: "POST",
           headers: {
@@ -215,7 +218,7 @@ const PostWidget = ({
             content: `@${parentComment.userId.firstName} ${replyText}`,
             parentCommentId: parentComment._id,
           }),
-        }
+        },
       );
       const updatedPost = await response.json();
       dispatch(setPost({ post: updatedPost }));
@@ -232,7 +235,7 @@ const PostWidget = ({
     if (!newCommentText.trim()) return;
     try {
       const response = await fetch(
-        `http://localhost:6001/posts/${postId}/comments`,
+        `https://campusconnect-backend.onrender.com/posts/${postId}/comments`,
         {
           method: "POST",
           headers: {
@@ -244,7 +247,7 @@ const PostWidget = ({
             content: newCommentText,
             parentCommentId: null,
           }),
-        }
+        },
       );
       const updatedPost = await response.json();
       dispatch(setPost({ post: updatedPost }));
@@ -260,7 +263,7 @@ const PostWidget = ({
     if (!editingText.trim()) return;
     try {
       const response = await fetch(
-        `http://localhost:6001/posts/${postId}/comments/${commentId}`,
+        `https://campusconnect-backend.onrender.com/posts/${postId}/comments/${commentId}`,
         {
           method: "PATCH",
           headers: {
@@ -268,7 +271,7 @@ const PostWidget = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ content: editingText }),
-        }
+        },
       );
       if (!response.ok) throw new Error("Failed to update comment");
       fetchComments();
@@ -283,14 +286,14 @@ const PostWidget = ({
   const deleteComment = async (commentId) => {
     try {
       const response = await fetch(
-        `http://localhost:6001/posts/${postId}/comments/${commentId}`,
+        `https://campusconnect-backend.onrender.com/posts/${postId}/comments/${commentId}`,
         {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       if (!response.ok) throw new Error("Failed to delete comment");
       fetchComments();
@@ -311,9 +314,9 @@ const PostWidget = ({
   const toggleLike = async (commentId) => {
     try {
       const response = await axios.patch(
-        `http://localhost:6001/comments/${commentId}/like`,
+        `https://campusconnect-backend.onrender.com/comments/${commentId}/like`,
         { userId: loggedInUserId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const updatedLikes = response.data.likes;
       setLikedComments((prev) => ({
@@ -331,14 +334,20 @@ const PostWidget = ({
 
   const handleDelete = async (e) => {
     e.stopPropagation();
-    await fetch(`http://localhost:6001/posts/postDelete/${postId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetch(
+      `https://campusconnect-backend.onrender.com/posts/postDelete/${postId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     // re‑fetch feed
-    const res = await fetch("http://localhost:6001/posts", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(
+      "https://campusconnect-backend.onrender.com/posts",
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     const allPosts = await res.json();
     dispatch(setPost(allPosts));
   };
@@ -521,7 +530,8 @@ const PostWidget = ({
             Posted on {new Date(createdAt).toLocaleString()}
           </Typography>
 
-          {(loggedInUserId === postUserId._id || loggedInUserRole === "admin") && ( // Check if the logged-in user is the creator or an admin
+          {(loggedInUserId === postUserId._id ||
+            loggedInUserRole === "admin") && ( // Check if the logged-in user is the creator or an admin
             <Button
               onClick={handleDelete}
               variant="outlined"
@@ -613,8 +623,8 @@ const PostWidget = ({
               {!isAttending && attendees.length >= venueCapacity
                 ? "Event Full"
                 : isAttending
-                ? "Attending"
-                : "Attend Event"}
+                  ? "Attending"
+                  : "Attend Event"}
             </Button>
             {/* Capacity/attendees info placed between Attend and Bookmark */}
             <Typography variant="caption" color={main}>
@@ -678,7 +688,8 @@ const PostWidget = ({
         <Typography variant="body2" color="primary">
           Posted on {new Date(createdAt).toLocaleString()}
         </Typography>
-        {(loggedInUserId === postUserId._id || loggedInUserRole ==="admin") && ( // Check if the logged-in user is the creator
+        {(loggedInUserId === postUserId._id ||
+          loggedInUserRole === "admin") && ( // Check if the logged-in user is the creator
           <Button
             onClick={handleDelete}
             variant="outlined"

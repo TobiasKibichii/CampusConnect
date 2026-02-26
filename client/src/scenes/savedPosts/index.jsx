@@ -12,7 +12,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
   // Fetch saved posts from the backend
   useEffect(() => {
     axios
-      .get("http://localhost:6001/save", {
+      .get("https://campusconnect-backend.onrender.com/save", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
@@ -61,7 +61,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
             eventLocation={eventLocation}
             attendees={attendees}
           />
-        )
+        ),
       )}
     </div>
   );

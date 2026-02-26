@@ -1,24 +1,33 @@
 import express from "express";
-import {  createPost, getFeedPosts, getUserPosts, likePost, attendEvent, postComments, getPostComments, updateComment, deleteComment, toggleLikeComment} from "../controllers/posts.js";
+import {
+  createPost,
+  getFeedPosts,
+  getUserPosts,
+  likePost,
+  attendEvent,
+  postComments,
+  getPostComments,
+  updateComment,
+  deleteComment,
+  toggleLikeComment,
+} from "../controllers/posts.js";
 import { verifyToken } from "../middleware/auth.js";
 import multer from "multer";
 import Post from "../models/Post.js";
 
-import mongoose from 'mongoose';
-
+import mongoose from "mongoose";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../cloudinary.js";
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets"); // storing in public/assets
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "posts",
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
-
-
 
 const upload = multer({
   storage: storage,
@@ -32,10 +41,8 @@ const upload = multer({
   },
 });
 
-
-
 /* READ */
-router.get("/",  verifyToken, getFeedPosts);
+router.get("/", verifyToken, getFeedPosts);
 router.post(
   "/p",
   verifyToken,
@@ -54,9 +61,8 @@ router.post(
       console.error("Error creating post:", err);
       res.status(500).json({ message: "Post creation failed." });
     }
-  }
+  },
 );
-
 
 router.get("/user/:userId", verifyToken, getUserPosts);
 
@@ -66,16 +72,15 @@ router.patch("/:postId/attend", verifyToken, attendEvent);
 router.patch("/:id/like", verifyToken, likePost);
 
 router.post("/:postId/comments", verifyToken, postComments);
-router.get("/:postId/comments", getPostComments)
+router.get("/:postId/comments", getPostComments);
 
-router.patch("/:postId/comments/:commentId", verifyToken, updateComment)
-router.delete("/:postId/comments/:commentId", verifyToken, deleteComment)
-
+router.patch("/:postId/comments/:commentId", verifyToken, updateComment);
+router.delete("/:postId/comments/:commentId", verifyToken, deleteComment);
 
 router.get("/popularEvents", verifyToken, async (req, res) => {
   try {
     const events = await Post.find({ type: "event" })
-      .sort({ "likes": -1, createdAt: -1 }) // sort by likes (assuming likes is a map)
+      .sort({ likes: -1, createdAt: -1 }) // sort by likes (assuming likes is a map)
       .exec();
 
     res.status(200).json({ events });
@@ -85,14 +90,14 @@ router.get("/popularEvents", verifyToken, async (req, res) => {
   }
 });
 
-
-
 // DELETE a post by ID
 router.delete("/postDelete/:id", verifyToken, async (req, res) => {
   try {
     const postId = req.params.id;
-    console.log( postId)
-    const deletedPost = await Post.findByIdAndDelete(new mongoose.Types.ObjectId(postId));
+    console.log(postId);
+    const deletedPost = await Post.findByIdAndDelete(
+      new mongoose.Types.ObjectId(postId),
+    );
 
     if (!deletedPost) {
       return res.status(404).json({ message: "Post not found" });
@@ -105,30 +110,25 @@ router.delete("/postDelete/:id", verifyToken, async (req, res) => {
   }
 });
 
-
-
 // Get a specific post or event with populated venue details
-router.get('/venueCapacity/:postId', async (req, res) => {
+router.get("/venueCapacity/:postId", async (req, res) => {
   try {
-    
-    const post = await Post.findById(req.params.postId)
-      .populate('venueId'); // Populate the venueId field to get venue details
+    const post = await Post.findById(req.params.postId).populate("venueId"); // Populate the venueId field to get venue details
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ message: "Post not found" });
     }
 
-    console.log("kkkkk" + post)
-    console.log("kkkkk" + post)
-    console.log("kkkkk" + post)
-    console.log("kkkkk" + post)
+    console.log("kkkkk" + post);
+    console.log("kkkkk" + post);
+    console.log("kkkkk" + post);
+    console.log("kkkkk" + post);
     // Send post data with populated venue information (like capacity)
     res.json(post);
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
-
 
 // In routes/posts.js (or events.js)
 
@@ -136,7 +136,7 @@ router.post("/:eventId/attendance", verifyToken, async (req, res) => {
   try {
     const { attendees } = req.body;
     const { eventId } = req.params;
-    console.log(attendees, eventId)
+    console.log(attendees, eventId);
     const event = await Post.findById(eventId);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
@@ -145,7 +145,6 @@ router.post("/:eventId/attendance", verifyToken, async (req, res) => {
         .status(400)
         .json({ message: "Attendance already confirmed for this event." });
 
-    
     event.presentCount = attendees.length;
     event.attendanceConfirmed = true;
 
@@ -156,7 +155,6 @@ router.post("/:eventId/attendance", verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // In your posts route (e.g., GET /posts/editor/:editorId)
 router.get("/editor/:userId", verifyToken, async (req, res) => {
@@ -170,7 +168,5 @@ router.get("/editor/:userId", verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 export default router;

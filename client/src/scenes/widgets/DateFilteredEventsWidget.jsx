@@ -7,7 +7,7 @@ import {
   ListItemText,
   Paper,
   Button,
-  TextField
+  TextField,
 } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -16,14 +16,12 @@ import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, isSameDay } from "date-fns";
 
-
 const DateFilteredEventsWidget = () => {
   const token = useSelector((state) => state.token);
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const navigate = useNavigate();
   const [showFullText, setShowFullText] = useState(false);
-
 
   const stripHtmlAndTrim = (html, wordLimit = 10) => {
     const plainText = html.replace(/<[^>]+>/g, ""); // remove HTML tags
@@ -32,17 +30,15 @@ const DateFilteredEventsWidget = () => {
     return words.slice(0, wordLimit).join(" ") + "...";
   };
 
-
-
   // Fetch all events once (or you could fetch per date endpoint)
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const response = await fetch(
-          "http://localhost:6001/posts/popularEvents",
+          "https://campusconnect-backend.onrender.com/posts/popularEvents",
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         const data = await response.json();
         // assume data.events is array with eventDate field
@@ -101,7 +97,7 @@ const DateFilteredEventsWidget = () => {
                   }}
                 />
               )}
-              
+
               <ListItemText
                 primary={
                   <>

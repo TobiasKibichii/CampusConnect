@@ -25,9 +25,12 @@ const Attendance = () => {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const res = await fetch(`http://localhost:6001/posts/editor/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `https://campusconnect-backend.onrender.com/posts/editor/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       const data = await res.json();
       setEvents(data);
     };
@@ -59,7 +62,6 @@ const Attendance = () => {
         }),
       });
       alert("Attendance submitted!");
-      
     } catch (err) {
       console.error(err);
       alert("Failed to submit attendance");
@@ -133,8 +135,7 @@ const Attendance = () => {
 
               {/* Updated Attendee Count */}
               <Typography mt={2}>
-                Attending: {event.presentCount} /{" "}
-                {event.attendees.length}
+                Attending: {event.presentCount} / {event.attendees.length}
               </Typography>
 
               {/* Submit Attendance Button */}

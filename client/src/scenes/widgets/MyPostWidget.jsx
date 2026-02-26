@@ -63,11 +63,10 @@ const MyPostWidget = ({ picturePath }) => {
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
 
-
   // Fetch available venues when postType is "event"
   useEffect(() => {
     if (postType === "event") {
-      fetch("http://localhost:6001/venues", {
+      fetch("https://campusconnect-backend.onrender.com/venues", {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -84,11 +83,11 @@ const MyPostWidget = ({ picturePath }) => {
       if (selectedVenue && eventDate) {
         try {
           const response = await axios.get(
-            `http://localhost:6001/venues/${selectedVenue._id}/bookings`,
+            `https://campusconnect-backend.onrender.com/venues/${selectedVenue._id}/bookings`,
             {
               params: { date: eventDate },
               headers: { Authorization: `Bearer ${token}` },
-            }
+            },
           );
           setBookedSlots(response.data);
         } catch (error) {
@@ -121,8 +120,8 @@ const MyPostWidget = ({ picturePath }) => {
       const eventToDate = new Date(`${eventDate}T${eventTimeTo}:00`);
       formData.append("eventTimeFrom", eventFromDate);
       formData.append("eventTimeTo", eventToDate);
-      console.log("iiiiiiiiii" + eventFromDate)
-      console.log("iiiiiiiiii" + eventToDate)
+      console.log("iiiiiiiiii" + eventFromDate);
+      console.log("iiiiiiiiii" + eventToDate);
       // Save the selected venue's ID as the location field.
       formData.append("location", selectedVenue ? selectedVenue._id : "");
     }
@@ -133,16 +132,18 @@ const MyPostWidget = ({ picturePath }) => {
     }
 
     // Create post/event
-    const response = await fetch(`http://localhost:6001/posts/p`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
+    const response = await fetch(
+      `https://campusconnect-backend.onrender.com/posts/p`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      },
+    );
 
     const posts = await response.json();
     dispatch(setPosts(posts));
 
-   
     // Reset form states
     setImage(null);
     setPost("");
@@ -315,7 +316,7 @@ const MyPostWidget = ({ picturePath }) => {
                   <ListItem key={index}>
                     <ListItemText
                       primary={`${new Date(
-                        slot.eventTimeFrom
+                        slot.eventTimeFrom,
                       ).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -324,7 +325,7 @@ const MyPostWidget = ({ picturePath }) => {
                         {
                           hour: "2-digit",
                           minute: "2-digit",
-                        }
+                        },
                       )}`}
                     />
                   </ListItem>
