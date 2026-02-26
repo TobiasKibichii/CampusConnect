@@ -66,7 +66,7 @@ const Form = () => {
 
     try {
       const savedUserResponse = await fetch(
-        "http://localhost:6001/auth/register",
+        "https://campusconnect-backend.onrender.com/auth/register",
         {
           method: "POST",
           body: formData,
