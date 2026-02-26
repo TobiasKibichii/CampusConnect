@@ -12,8 +12,10 @@ import {
 import { usersSearch } from "../controllers/search.js";
 import { verifyToken } from "../middleware/auth.js";
 import multer from "multer";
-
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../cloudinary.js";
 const router = express.Router();
+
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
