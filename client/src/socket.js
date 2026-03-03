@@ -1,7 +1,7 @@
 // src/socket.js
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:6001", {
+const socket = io("https://campusconnect-ycfd.onrender.com", {
   withCredentials: true,
   transports: ["websocket"],
 });

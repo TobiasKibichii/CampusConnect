@@ -31,7 +31,7 @@ const PopularEventsWidget = () => {
       try {
         // Assuming this endpoint returns events sorted by like count (descending)
         const response = await fetch(
-          "https://campusconnect-backend.onrender.com/posts/popularEvents",
+          "https://campusconnect-ycfd.onrender.com/posts/popularEvents",
           {
             headers: { Authorization: `Bearer ${token}` },
           },

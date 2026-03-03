@@ -12,7 +12,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
   // Fetch saved posts from the backend
   useEffect(() => {
     axios
-      .get("https://campusconnect-backend.onrender.com/save", {
+      .get("https://campusconnect-ycfd.onrender.com/save", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {

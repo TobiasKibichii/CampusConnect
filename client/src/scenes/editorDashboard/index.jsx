@@ -43,7 +43,7 @@ const EditorDashboard = () => {
 
   // Fetch group details on mount
   useEffect(() => {
-    fetch("https://campusconnect-backend.onrender.com/editor/group", {
+    fetch("https://campusconnect-ycfd.onrender.com/editor/group", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -67,7 +67,7 @@ const EditorDashboard = () => {
 
   // Handler to update group details
   const handleUpdateGroup = () => {
-    fetch("https://campusconnect-backend.onrender.com/editor/group", {
+    fetch("https://campusconnect-ycfd.onrender.com/editor/group", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -95,7 +95,7 @@ const EditorDashboard = () => {
   // Approve join request for a user
   const handleApproveJoin = (userId) => {
     fetch(
-      `https://campusconnect-backend.onrender.com/editor/group/approve-join/${userId}`,
+      `https://campusconnect-ycfd.onrender.com/editor/group/approve-join/${userId}`,
       {
         method: "POST",
         headers: {
@@ -124,7 +124,7 @@ const EditorDashboard = () => {
   // Reject join request for a user
   const handleRejectJoin = (userId) => {
     fetch(
-      `https://campusconnect-backend.onrender.com/editor/group/reject-join/${userId}`,
+      `https://campusconnect-ycfd.onrender.com/editor/group/reject-join/${userId}`,
       {
         method: "POST",
         headers: {
@@ -159,7 +159,7 @@ const EditorDashboard = () => {
   // Confirm removal of a group member
   const confirmRemoveMember = () => {
     fetch(
-      `https://campusconnect-backend.onrender.com/editor/group/members/${selectedMemberId}`,
+      `https://campusconnect-ycfd.onrender.com/editor/group/members/${selectedMemberId}`,
       {
         method: "DELETE",
         headers: {

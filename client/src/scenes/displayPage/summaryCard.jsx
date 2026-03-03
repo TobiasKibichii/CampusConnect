@@ -18,7 +18,7 @@ const SummaryCard = ({ description, about, whatYoullLearn, type }) => {
         const text = type === "event" ? about : description;
 
         const response = await fetch(
-          "https://campusconnect-summarizer.onrender.com/summarize",
+          "https://campusconnect-ycfd.onrender.com/summarize",
           {
             method: "POST",
             headers: {

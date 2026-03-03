@@ -1,6 +1,6 @@
 export const getSummary = async (text) => {
   const res = await fetch(
-    "https://campusconnect-summarizer.onrender.com/summarize",
+    "https://huggingface.co/spaces/evolving8/campusconnect-summarizer/summarize",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

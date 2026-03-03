@@ -99,7 +99,7 @@ const PostWidget = ({
   const fetchComments = async () => {
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/posts/${postId}/comments`,
+        `https://campusconnect-ycfd.onrender.com/posts/${postId}/comments`,
         {
           method: "GET",
           headers: {
@@ -124,9 +124,9 @@ const PostWidget = ({
     const fetchEventData = async () => {
       try {
         const response = await axios.get(
-          `https://campusconnect-backend.onrender.com/posts/venueCapacity/${postId}`,
+          `https://campusconnect-ycfd.onrender.com/posts/venueCapacity/${postId}`,
         );
-        console.log("kkk" + response.data);
+        console.log("kkk" + JSON.stringify(response.data));
         setEventData(response.data); // The event data includes the populated venue
       } catch (error) {
         console.error("Error fetching event data:", error);
@@ -149,7 +149,7 @@ const PostWidget = ({
   // Like Post/Event
   const patchLike = async () => {
     const response = await fetch(
-      `https://campusconnect-backend.onrender.com/posts/${postId}/like`,
+      `https://campusconnect-ycfd.onrender.com/posts/${postId}/like`,
       {
         method: "PATCH",
         headers: {
@@ -166,7 +166,7 @@ const PostWidget = ({
   // Attend Event
   const toggleAttend = async () => {
     const response = await fetch(
-      `https://campusconnect-backend.onrender.com/posts/${postId}/attend`,
+      `https://campusconnect-ycfd.onrender.com/posts/${postId}/attend`,
       {
         method: "PATCH",
         headers: {
@@ -184,7 +184,7 @@ const PostWidget = ({
   const patchSave = async () => {
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/save/${postId}`,
+        `https://campusconnect-ycfd.onrender.com/save/${postId}`,
         {
           method: "PATCH",
           headers: {
@@ -206,7 +206,7 @@ const PostWidget = ({
     if (!replyText.trim()) return;
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/posts/${postId}/comments`,
+        `https://campusconnect-ycfd.onrender.com/posts/${postId}/comments`,
         {
           method: "POST",
           headers: {
@@ -235,7 +235,7 @@ const PostWidget = ({
     if (!newCommentText.trim()) return;
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/posts/${postId}/comments`,
+        `https://campusconnect-ycfd.onrender.com/posts/${postId}/comments`,
         {
           method: "POST",
           headers: {
@@ -263,7 +263,7 @@ const PostWidget = ({
     if (!editingText.trim()) return;
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/posts/${postId}/comments/${commentId}`,
+        `https://campusconnect-ycfd.onrender.com/posts/${postId}/comments/${commentId}`,
         {
           method: "PATCH",
           headers: {
@@ -286,7 +286,7 @@ const PostWidget = ({
   const deleteComment = async (commentId) => {
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/posts/${postId}/comments/${commentId}`,
+        `https://campusconnect-ycfd.onrender.com/posts/${postId}/comments/${commentId}`,
         {
           method: "DELETE",
           headers: {
@@ -314,7 +314,7 @@ const PostWidget = ({
   const toggleLike = async (commentId) => {
     try {
       const response = await axios.patch(
-        `https://campusconnect-backend.onrender.com/comments/${commentId}/like`,
+        `https://campusconnect-ycfd.onrender.com/comments/${commentId}/like`,
         { userId: loggedInUserId },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -335,27 +335,25 @@ const PostWidget = ({
   const handleDelete = async (e) => {
     e.stopPropagation();
     await fetch(
-      `https://campusconnect-backend.onrender.com/posts/postDelete/${postId}`,
+      `https://campusconnect-ycfd.onrender.com/posts/postDelete/${postId}`,
       {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       },
     );
     // re‑fetch feed
-    const res = await fetch(
-      "https://campusconnect-backend.onrender.com/posts",
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    );
+    const res = await fetch("https://campusconnect-ycfd.onrender.com/posts", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const allPosts = await res.json();
+
     dispatch(setPost(allPosts));
   };
 
   // Recursive function to render a comment and its nested replies
   const renderComment = (comment, level = 0) => {
     const profileUrl = comment.userId?.picturePath
-      ? `http://localhost:6001/assets/${comment.userId.picturePath}`
+      ? `${comment.userId.picturePath}`
       : "/defaultAvatar.png";
 
     return (
@@ -560,8 +558,8 @@ const PostWidget = ({
             {picturePath && (
               <Box
                 component="img"
-                src={`http://localhost:6001/assets/${picturePath}`}
-                alt={`http://localhost:6001/assets/${picturePath}`}
+                src={`${picturePath}`}
+                alt={`${picturePath}`}
                 sx={{
                   width: "100%",
                   maxHeight: "150px",
@@ -731,7 +729,7 @@ const PostWidget = ({
 
       {picturePath && (
         <img
-          src={`http://localhost:6001/assets/${picturePath}`}
+          src={`${picturePath}`}
           alt="post"
           style={{
             width: "100%",

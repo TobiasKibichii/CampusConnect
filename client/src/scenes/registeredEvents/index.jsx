@@ -14,7 +14,7 @@ const RegisteredEventsWidget = () => {
   useEffect(() => {
     axios
       .get(
-        "https://campusconnect-backend.onrender.com/events/getRegisteredEvents",
+        "https://campusconnect-ycfd.onrender.com/events/getRegisteredEvents",
         {
           headers: { Authorization: `Bearer ${token}` },
         },

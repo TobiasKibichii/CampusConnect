@@ -26,7 +26,7 @@ const Attendance = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       const res = await fetch(
-        `https://campusconnect-backend.onrender.com/posts/editor/${userId}`,
+        `https://campusconnect-ycfd.onrender.com/posts/editor/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },

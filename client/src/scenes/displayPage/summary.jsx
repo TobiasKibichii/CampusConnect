@@ -17,7 +17,7 @@ const Summary = ({ summary }) => {
     const fetchEventData = async () => {
       try {
         const response = await axios.get(
-          `https://campusconnect-backend.onrender.com/events/${postId}`,
+          `https://campusconnect-ycfd.onrender.com/events/${postId}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
 

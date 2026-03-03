@@ -66,7 +66,7 @@ const MyPostWidget = ({ picturePath }) => {
   // Fetch available venues when postType is "event"
   useEffect(() => {
     if (postType === "event") {
-      fetch("https://campusconnect-backend.onrender.com/venues", {
+      fetch("https://campusconnect-ycfd.onrender.com/venues", {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -83,7 +83,7 @@ const MyPostWidget = ({ picturePath }) => {
       if (selectedVenue && eventDate) {
         try {
           const response = await axios.get(
-            `https://campusconnect-backend.onrender.com/venues/${selectedVenue._id}/bookings`,
+            `https://campusconnect-ycfd.onrender.com/venues/${selectedVenue._id}/bookings`,
             {
               params: { date: eventDate },
               headers: { Authorization: `Bearer ${token}` },
@@ -133,7 +133,7 @@ const MyPostWidget = ({ picturePath }) => {
 
     // Create post/event
     const response = await fetch(
-      `https://campusconnect-backend.onrender.com/posts/p`,
+      `https://campusconnect-ycfd.onrender.com/posts/p`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },

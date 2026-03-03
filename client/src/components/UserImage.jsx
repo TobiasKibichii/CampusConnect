@@ -1,6 +1,8 @@
 import { Box } from "@mui/material";
 
+const CLOUDINARY_BASE = process.env.CLOUDINARY_BASE;
 const UserImage = ({ image, size = "60px" }) => {
+  console.log(CLOUDINARY_BASE);
   return (
     <Box width={size} height={size}>
       <img
@@ -8,7 +10,7 @@ const UserImage = ({ image, size = "60px" }) => {
         width={size}
         height={size}
         alt="user"
-        src={`http://localhost:6001/assets/${image}`}
+        src={`${image}`}
       />
     </Box>
   );

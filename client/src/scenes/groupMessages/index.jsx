@@ -58,7 +58,7 @@ const GroupMessages = () => {
     const fetchGroupName = async () => {
       try {
         const res = await fetch(
-          `https://campusconnect-backend.onrender.com/groups/find?groupId=${groupId}`,
+          `https://campusconnect-ycfd.onrender.com/groups/find?groupId=${groupId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -75,7 +75,7 @@ const GroupMessages = () => {
 
   useEffect(() => {
     fetch(
-      `https://campusconnect-backend.onrender.com/groupMessages/${groupId}/messages`,
+      `https://campusconnect-ycfd.onrender.com/groupMessages/${groupId}/messages`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -109,7 +109,7 @@ const GroupMessages = () => {
     if (!newMessageText.trim()) return;
     try {
       const res = await fetch(
-        `https://campusconnect-backend.onrender.com/groupMessages/${groupId}/messages`,
+        `https://campusconnect-ycfd.onrender.com/groupMessages/${groupId}/messages`,
         {
           method: "POST",
           headers: {
@@ -132,7 +132,7 @@ const GroupMessages = () => {
     if (!replyText.trim()) return;
     try {
       const res = await fetch(
-        `https://campusconnect-backend.onrender.com/groupMessages/${groupId}/messages`,
+        `https://campusconnect-ycfd.onrender.com/groupMessages/${groupId}/messages`,
         {
           method: "POST",
           headers: {

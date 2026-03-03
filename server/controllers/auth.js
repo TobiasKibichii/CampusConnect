@@ -3,13 +3,13 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 /* REGISTER USER */
-
+const CLOUDINARY_BASE = process.env.CLOUDINARY_BASE;
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password, location, occupation } =
       req.body;
 
-    const picturePath = req.file ? req.file.filename : "";
+    const picturePath = req.file ? CLOUDINARY_BASE + req.file.filename : "";
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);

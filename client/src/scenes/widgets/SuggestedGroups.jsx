@@ -39,7 +39,7 @@ const SuggestedGroups = () => {
       if (token) {
         try {
           const response = await fetch(
-            "https://campusconnect-backend.onrender.com/groups",
+            "https://campusconnect-ycfd.onrender.com/groups",
             {
               headers: {
                 "Content-Type": "application/json",
@@ -72,7 +72,7 @@ const SuggestedGroups = () => {
   const handleJoinGroup = async (groupId) => {
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/groups/${groupId}/requestJoin`,
+        `https://campusconnect-ycfd.onrender.com/groups/${groupId}/requestJoin`,
         {
           method: "POST",
           headers: {

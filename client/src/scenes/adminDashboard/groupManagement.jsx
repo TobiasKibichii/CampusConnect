@@ -41,7 +41,7 @@ const GroupManagement = () => {
   // Fetch groups from the backend when the component mounts
   useEffect(() => {
     if (currentUser?.role === "admin") {
-      fetch("https://campusconnect-backend.onrender.com/admin/groups", {
+      fetch("https://campusconnect-ycfd.onrender.com/admin/groups", {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -73,7 +73,7 @@ const GroupManagement = () => {
   // Send DELETE request to backend and update state
   const confirmDeleteGroup = () => {
     fetch(
-      `https://campusconnect-backend.onrender.com/admin/groups/${selectedGroupId}`,
+      `https://campusconnect-ycfd.onrender.com/admin/groups/${selectedGroupId}`,
       {
         method: "DELETE",
         headers: {

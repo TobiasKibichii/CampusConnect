@@ -40,7 +40,7 @@ const FollowEditorsPage = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          "https://campusconnect-backend.onrender.com/users/editors",
+          "https://campusconnect-ycfd.onrender.com/users/editors",
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -72,7 +72,7 @@ const FollowEditorsPage = () => {
     try {
       setLoading(true);
       await axios.put(
-        "https://campusconnect-backend.onrender.com/users/followEditors",
+        "https://campusconnect-ycfd.onrender.com/users/followEditors",
         { userId: user._id, editors: selectedEditors },
         { headers: { Authorization: `Bearer ${token}` } },
       );

@@ -26,7 +26,7 @@ const SearchResults = () => {
       )}${role ? `&role=${encodeURIComponent(role)}` : ""}`;
 
       // User Search Request
-      const userUrl = `https://campusconnect-backend.onrender.com/api/search-users?q=${encodeURIComponent(
+      const userUrl = `https://campusconnect-ycfd.onrender.com/api/search-users?q=${encodeURIComponent(
         query,
       )}${role ? `&role=${encodeURIComponent(role)}` : ""}`;
 

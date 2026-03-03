@@ -35,7 +35,7 @@ const DateFilteredEventsWidget = () => {
     const fetchEvents = async () => {
       try {
         const response = await fetch(
-          "https://campusconnect-backend.onrender.com/posts/popularEvents",
+          "https://campusconnect-ycfd.onrender.com/posts/popularEvents",
           {
             headers: { Authorization: `Bearer ${token}` },
           },

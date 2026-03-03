@@ -55,7 +55,7 @@ const UserManagement = () => {
   // Fetch users on component mount if current user is an admin
   useEffect(() => {
     if (currentUser?.role === "admin") {
-      fetch("https://campusconnect-backend.onrender.com/admin/users", {
+      fetch("https://campusconnect-ycfd.onrender.com/admin/users", {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -87,7 +87,7 @@ const UserManagement = () => {
   // Confirm deletion, then call the DELETE endpoint
   const confirmDeleteUser = () => {
     fetch(
-      `https://campusconnect-backend.onrender.com/admin/users/${selectedUserId}`,
+      `https://campusconnect-ycfd.onrender.com/admin/users/${selectedUserId}`,
       {
         method: "DELETE",
         headers: {
@@ -133,7 +133,7 @@ const UserManagement = () => {
   // Confirm user update by calling the PATCH endpoint
   const confirmEditUser = () => {
     fetch(
-      `https://campusconnect-backend.onrender.com/admin/users/${selectedUser._id}`,
+      `https://campusconnect-ycfd.onrender.com/admin/users/${selectedUser._id}`,
       {
         method: "PATCH",
         headers: {

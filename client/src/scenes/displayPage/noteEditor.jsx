@@ -16,7 +16,7 @@ const NoteEditor = ({ postId }) => {
     const fetchNote = async () => {
       try {
         const res = await axios.get(
-          `https://campusconnect-backend.onrender.com/notes/notes/${postId}`,
+          `https://campusconnect-ycfd.onrender.com/notes/notes/${postId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -43,7 +43,7 @@ const NoteEditor = ({ postId }) => {
       if (noteId) {
         // Update existing note
         await axios.put(
-          `https://campusconnect-backend.onrender.com/notes/notes/${noteId}`,
+          `https://campusconnect-ycfd.onrender.com/notes/notes/${noteId}`,
           { content: noteContent },
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -53,7 +53,7 @@ const NoteEditor = ({ postId }) => {
       } else {
         // Create new note
         const res = await axios.post(
-          `https://campusconnect-backend.onrender.com/notes/notes`,
+          `https://campusconnect-ycfd.onrender.com/notes/notes`,
           { postId, content: noteContent },
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -71,7 +71,7 @@ const NoteEditor = ({ postId }) => {
     if (!noteId) return;
     try {
       await axios.delete(
-        `https://campusconnect-backend.onrender.com/notes/notes/${noteId}`,
+        `https://campusconnect-ycfd.onrender.com/notes/notes/${noteId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },

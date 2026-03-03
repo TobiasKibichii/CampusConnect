@@ -46,7 +46,7 @@ const VenueAdmin = () => {
   // Fetch venues from the backend when the component mounts
   useEffect(() => {
     if (currentUser?.role === "admin") {
-      fetch("https://campusconnect-backend.onrender.com/admin/venues", {
+      fetch("https://campusconnect-ycfd.onrender.com/admin/venues", {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -78,7 +78,7 @@ const VenueAdmin = () => {
   // Send DELETE request to backend and update state
   const confirmDeleteVenue = () => {
     fetch(
-      `https://campusconnect-backend.onrender.com/admin/venues/${selectedVenueId}`,
+      `https://campusconnect-ycfd.onrender.com/admin/venues/${selectedVenueId}`,
       {
         method: "DELETE",
         headers: {
@@ -127,7 +127,7 @@ const VenueAdmin = () => {
       capacity: Number(newVenueCapacity),
     };
 
-    fetch("https://campusconnect-backend.onrender.com/admin/venues", {
+    fetch("https://campusconnect-ycfd.onrender.com/admin/venues", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

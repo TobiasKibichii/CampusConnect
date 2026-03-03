@@ -27,7 +27,7 @@ const GroupWidget = () => {
   const token = useSelector((state) => state.token);
   const navigate = useNavigate();
   // Create a single socket instance – you may also want to extract this into a separate file
-  const socket = io("https://campusconnect-backend.onrender.com");
+  const socket = io("https://campusconnect-ycfd.onrender.com");
 
   // States for user's groups, suggested groups, loading state, input and errors
   const [userGroups, setUserGroups] = useState([]);
@@ -61,7 +61,7 @@ const GroupWidget = () => {
 
   // Fetch groups data from backend on mount
   useEffect(() => {
-    fetch("https://campusconnect-backend.onrender.com/groups", {
+    fetch("https://campusconnect-ycfd.onrender.com/groups", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ const GroupWidget = () => {
     if (token) {
       axios
         .get(
-          "https://campusconnect-backend.onrender.com/notifications/groupNotifications",
+          "https://campusconnect-ycfd.onrender.com/notifications/groupNotifications",
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -110,7 +110,7 @@ const GroupWidget = () => {
     console.log("📥 markGroupNotificationsAsRead HIT");
     try {
       await axios.put(
-        "https://campusconnect-backend.onrender.com/notifications/groupNotifications/markAsRead",
+        "https://campusconnect-ycfd.onrender.com/notifications/groupNotifications/markAsRead",
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -125,7 +125,7 @@ const GroupWidget = () => {
   // Handler for creating a new group (for editors)
   const handleCreateGroup = (e) => {
     e.preventDefault();
-    fetch("https://campusconnect-backend.onrender.com/groups/postGroup", {
+    fetch("https://campusconnect-ycfd.onrender.com/groups/postGroup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -160,7 +160,7 @@ const GroupWidget = () => {
   const handleJoinGroup = async (groupId) => {
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/groups/${groupId}/requestJoin`,
+        `https://campusconnect-ycfd.onrender.com/groups/${groupId}/requestJoin`,
         {
           method: "POST",
           headers: {

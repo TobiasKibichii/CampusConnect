@@ -13,7 +13,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
   const getUserPosts = useCallback(async () => {
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/posts/user/${userId}`,
+        `https://campusconnect-ycfd.onrender.com/posts/user/${userId}`,
         {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
@@ -29,7 +29,7 @@ const PostsWidget = ({ userId, isProfile = false, filter }) => {
 
   // Fetch all posts (or filtered posts)
   const getPosts = useCallback(async () => {
-    let url = "https://campusconnect-backend.onrender.com/posts";
+    let url = "https://campusconnect-ycfd.onrender.com/posts";
     if (filter === "events") url += "?type=events";
     if (filter === "friends" && userId) url += `?type=friends&userId=${userId}`;
     try {

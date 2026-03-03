@@ -52,7 +52,7 @@ const UserWidget = ({ userId, picturePath }) => {
   const getUser = useCallback(async () => {
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/users/${userId}`,
+        `https://campusconnect-ycfd.onrender.com/users/${userId}`,
         {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
@@ -103,7 +103,7 @@ const UserWidget = ({ userId, picturePath }) => {
       }
 
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/users/${userId}`,
+        `https://campusconnect-ycfd.onrender.com/users/${userId}`,
         {
           method: "PATCH",
           headers: {

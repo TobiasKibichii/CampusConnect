@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:6001";
+const API_URL = "https://campusconnect-ycfd.onrender.com";
 
 export const getRecommendations = async (userId, token) => {
   try {
@@ -11,7 +11,10 @@ export const getRecommendations = async (userId, token) => {
     });
     return response.data.recommendations;
   } catch (error) {
-    console.error("Error fetching recommendations:", error.response?.data || error.message);
+    console.error(
+      "Error fetching recommendations:",
+      error.response?.data || error.message,
+    );
     return [];
   }
 };

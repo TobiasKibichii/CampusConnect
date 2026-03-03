@@ -62,7 +62,7 @@ const PostDetails = () => {
     const fetchPostDetails = async () => {
       try {
         const response = await fetch(
-          `https://campusconnect-backend.onrender.com/events/${postId}`,
+          `https://campusconnect-ycfd.onrender.com/events/${postId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -113,7 +113,7 @@ const PostDetails = () => {
     const fetchEventData = async () => {
       try {
         const response = await axios.get(
-          `https://campusconnect-backend.onrender.com/posts/venueCapacity/${postId}`,
+          `https://campusconnect-ycfd.onrender.com/posts/venueCapacity/${postId}`,
         );
         console.log("kkk" + response.data);
         setEventData(response.data); // The event data includes the populated venue
@@ -138,7 +138,7 @@ const PostDetails = () => {
   const handleSavePost = async () => {
     try {
       const response = await axios.patch(
-        `https://campusconnect-backend.onrender.com/save/${postId}`,
+        `https://campusconnect-ycfd.onrender.com/save/${postId}`,
         { userId: currentUserId },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -152,7 +152,7 @@ const PostDetails = () => {
   const handleLike = async () => {
     try {
       const response = await axios.patch(
-        `https://campusconnect-backend.onrender.com/posts/${postId}/like`,
+        `https://campusconnect-ycfd.onrender.com/posts/${postId}/like`,
         { userId: currentUserId },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -166,7 +166,7 @@ const PostDetails = () => {
   const handleAttend = async () => {
     try {
       const response = await axios.patch(
-        `https://campusconnect-backend.onrender.com/posts/${postId}/attend`,
+        `https://campusconnect-ycfd.onrender.com/posts/${postId}/attend`,
         { userId: currentUserId },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -192,7 +192,7 @@ const PostDetails = () => {
     }
     try {
       const response = await fetch(
-        `https://campusconnect-backend.onrender.com/events/${postId}`,
+        `https://campusconnect-ycfd.onrender.com/events/${postId}`,
         {
           method: "PATCH",
           headers: {

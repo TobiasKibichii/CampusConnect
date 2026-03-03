@@ -10,7 +10,7 @@ const AnalyticsDashboard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("https://campusconnect-backend.onrender.com/admin/analytics", {
+    fetch("https://campusconnect-ycfd.onrender.com/admin/analytics", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,

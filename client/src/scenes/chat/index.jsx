@@ -22,7 +22,7 @@ const ChatSection = () => {
     const fetchPartner = async () => {
       try {
         const response = await fetch(
-          `https://campusconnect-backend.onrender.com/users/${userId}`,
+          `https://campusconnect-ycfd.onrender.com/users/${userId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -39,7 +39,7 @@ const ChatSection = () => {
 
   // Setup Socket.io connection
   useEffect(() => {
-    socketRef.current = io("https://campusconnect-backend.onrender.com", {
+    socketRef.current = io("https://campusconnect-ycfd.onrender.com", {
       auth: { token },
     });
     // Join the current user's room
@@ -68,7 +68,7 @@ const ChatSection = () => {
     const fetchMessages = async () => {
       try {
         const response = await fetch(
-          `https://campusconnect-backend.onrender.com/messages?sender=${currentUser._id}&receiver=${userId}`,
+          `https://campusconnect-ycfd.onrender.com/messages?sender=${currentUser._id}&receiver=${userId}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         const data = await response.json();

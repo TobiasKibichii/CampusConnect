@@ -21,7 +21,7 @@ const MessageNotifications = () => {
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        "https://campusconnect-backend.onrender.com/messages/messageNotifications",
+        "https://campusconnect-ycfd.onrender.com/messages/messageNotifications",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -39,7 +39,7 @@ const MessageNotifications = () => {
   const markNotificationsAsRead = async () => {
     try {
       const response = await fetch(
-        "https://campusconnect-backend.onrender.com/messageNotifications/markNotificationsRead",
+        "https://campusconnect-ycfd.onrender.com/messageNotifications/markNotificationsRead",
         {
           method: "PATCH",
           headers: {
@@ -93,7 +93,7 @@ const MessageNotifications = () => {
               <Avatar
                 src={
                   notif.sender.picturePath
-                    ? `https://campusconnect-backend.onrender.com/assets/${notif.sender.picturePath}`
+                    ? `https://campusconnect-ycfd.onrender.com/assets/${notif.sender.picturePath}`
                     : ""
                 }
               />

@@ -14,8 +14,6 @@ const Friend = ({ friendId, name, subtitle, userPicturePath, role }) => {
   const { _id } = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
   const friends = useSelector((state) => state.user.friends);
-  
-
 
   const { palette } = useTheme();
   const primaryLight = palette.primary.light;
@@ -30,24 +28,23 @@ const Friend = ({ friendId, name, subtitle, userPicturePath, role }) => {
   useEffect(() => {
     setIsFriend(
       friends.some(
-        (friend) => friend._id === friendId || friend._id === friendId._id
-      )
+        (friend) => friend._id === friendId || friend._id === friendId._id,
+      ),
     );
-
   }, [friends, friendId]);
 
   const patchFriend = async () => {
     setIsFriend((prev) => !prev); // Optimistic toggle
     try {
       const response = await fetch(
-        `http://localhost:6001/users/${_id}/${friendId._id}`,
+        `https://campusconnect-ycfd.onrender.com/users/${_id}/${friendId._id}`,
         {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       const data = await response.json();
       dispatch(setFriends({ friends: data }));
@@ -78,12 +75,9 @@ const Friend = ({ friendId, name, subtitle, userPicturePath, role }) => {
             }}
           >
             {name}
-            
-            {(role === "editor" ||
-                                role === "admin") && (
-                                <CheckCircleOutline
-                                  sx={{ color: "blue", marginLeft: "8px" }}
-                                  />
+
+            {(role === "editor" || role === "admin") && (
+              <CheckCircleOutline sx={{ color: "blue", marginLeft: "8px" }} />
             )}
           </Typography>
           <Typography color={medium} fontSize="0.75rem">

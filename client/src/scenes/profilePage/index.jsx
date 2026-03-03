@@ -24,7 +24,7 @@ const ProfilePage = () => {
   const getUser = async () => {
     console.log(userId + " yyyyyyyy");
     const response = await fetch(
-      `https://campusconnect-backend.onrender.com/users/${userId}`,
+      `https://campusconnect-ycfd.onrender.com/users/${userId}`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },

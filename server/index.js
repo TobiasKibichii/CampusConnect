@@ -92,7 +92,7 @@ app.use("/notes", notesRoutes);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://campusconnect-frontend.onrender.com", // Change this to your frontend URL if needed
+    origin: "https://campusconnect-client-2q4a.onrender.com", // Change this to your frontend URL if needed
     methods: ["GET", "POST"],
   },
 });

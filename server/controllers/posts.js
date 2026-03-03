@@ -2,32 +2,35 @@ import Post from "../models/Post.js";
 import User from "../models/User.js";
 import Comment from "../models/Comment.js";
 import Notification from "../models/Notification.js";
-import Venue from "../models/Venue.js"; 
-
+import Venue from "../models/Venue.js";
+const CLOUDINARY_BASE = process.env.CLOUDINARY_BASE;
 /* CREATE */
 // Create Post/Event
 export const createPost = async (req, res) => {
   try {
     console.log("Request body:", req.body);
     // Extract fields from the request body
-    const { 
-      userId, 
-      description,           // For events, this is the event title.
-      picturePath, 
-      type, 
-      eventDate,             // Expecting a date string, e.g. "2025-04-18"
-      location,              // This field contains the venueId for events
-      eventTimeFrom,         // ISO string, e.g. "2025-04-18T06:00:00.000Z"
-      eventTimeTo,           // ISO string, e.g. "2025-04-18T08:00:00.000Z"
-      about,                 // Detailed "About" information for the event
-      whatYoullLearn         // "What You'll Learn" content (rich HTML, e.g., from ReactQuill)
+    const {
+      userId,
+      description, // For events, this is the event title.
+
+      type,
+      eventDate, // Expecting a date string, e.g. "2025-04-18"
+      location, // This field contains the venueId for events
+      eventTimeFrom, // ISO string, e.g. "2025-04-18T06:00:00.000Z"
+      eventTimeTo, // ISO string, e.g. "2025-04-18T08:00:00.000Z"
+      about, // Detailed "About" information for the event
+      whatYoullLearn, // "What You'll Learn" content (rich HTML, e.g., from ReactQuill)
     } = req.body;
-    
+
+    const picturePath = req.file ? CLOUDINARY_BASE + req.file.filename : "";
     // Validate required fields for both regular posts and events.
     if (!userId || !description) {
-      return res.status(400).json({ message: "User ID and description are required." });
+      return res
+        .status(400)
+        .json({ message: "User ID and description are required." });
     }
-    
+
     // For events, enforce that the eventDate is at least one week from now.
     if (type === "event") {
       const now = new Date();
@@ -36,8 +39,8 @@ export const createPost = async (req, res) => {
 
       const providedDate = new Date(eventDate);
       if (providedDate < oneWeekAhead) {
-        return res.status(400).json({ 
-          message: "Event must be scheduled at least one week in advance." 
+        return res.status(400).json({
+          message: "Event must be scheduled at least one week in advance.",
         });
       }
     }
@@ -47,18 +50,20 @@ export const createPost = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    
+
     // For events, check if the user has the proper role.
     if (type === "event" && user.role !== "editor" && user.role !== "admin") {
-      return res.status(403).json({ message: "Only editors and admins can create events." });
+      return res
+        .status(403)
+        .json({ message: "Only editors and admins can create events." });
     }
-    
+
     // Set default values
     let locationValue = user.location; // For regular posts, fallback to user's own location.
     let venueId = null;
     let startDateTime = null;
     let endDateTime = null;
-    
+
     if (type === "event") {
       // Look up the venue using the provided venueId (from the 'location' field).
       const venue = await Venue.findById(location);
@@ -68,11 +73,11 @@ export const createPost = async (req, res) => {
       } else {
         return res.status(404).json({ message: "Venue not found." });
       }
-      
+
       // Convert the provided ISO time strings into Date objects.
       startDateTime = new Date(eventTimeFrom);
       endDateTime = new Date(eventTimeTo);
-      
+
       // Validate that the dates are valid.
       if (isNaN(startDateTime.getTime())) {
         return res.status(400).json({ message: "Invalid start time." });
@@ -80,34 +85,37 @@ export const createPost = async (req, res) => {
       if (isNaN(endDateTime.getTime())) {
         return res.status(400).json({ message: "Invalid end time." });
       }
-      
+
       // Validate business hours: event must be scheduled between 8 AM and 6 PM on the given date.
       const businessStart = new Date(`${eventDate}T08:00:00`);
       const businessEnd = new Date(`${eventDate}T18:00:00`);
       if (startDateTime < businessStart || endDateTime > businessEnd) {
-        return res.status(400).json({ message: "Event must be scheduled between 8 AM and 6 PM." });
+        return res
+          .status(400)
+          .json({ message: "Event must be scheduled between 8 AM and 6 PM." });
       }
-      
+
       // Check for conflicts: ensure that the venue is not already booked in the time slot.
       const conflict = await Post.findOne({
         type: "event",
         venueId: venueId,
         eventDate: eventDate,
         eventTimeFrom: { $lt: endDateTime },
-        eventTimeTo: { $gt: startDateTime }
+        eventTimeTo: { $gt: startDateTime },
       });
-      
+
       if (conflict) {
         return res.status(409).json({
-          message: "The selected venue is already booked for the chosen time slot."
+          message:
+            "The selected venue is already booked for the chosen time slot.",
         });
       }
-      
+
       // Mark the venue as booked (optional; depends on your business logic).
       venue.available = false;
       await venue.save();
     }
-    
+
     // Create a new Post document.
     const newPost = new Post({
       userId,
@@ -116,7 +124,7 @@ export const createPost = async (req, res) => {
       location: type === "event" ? locationValue : user.location,
       description,
       userPicturePath: user.picturePath,
-      picturePath: req.file?.filename || null,
+      picturePath,
       type, // "post" or "event"
       eventDate: type === "event" ? eventDate : null,
       eventTimeFrom: type === "event" ? startDateTime : null,
@@ -130,9 +138,9 @@ export const createPost = async (req, res) => {
       status: type === "event" ? "Scheduled" : undefined,
       processed: false,
     });
-    
+
     const savedPost = await newPost.save();
-    
+
     // Optionally, create notifications for friends.
     if (user.friends && user.friends.length > 0) {
       const notifications = user.friends.map((friendId) => ({
@@ -143,21 +151,17 @@ export const createPost = async (req, res) => {
       }));
       await Notification.insertMany(notifications);
     }
-    
+
     // Fetch all posts in descending order to update the feed.
     const posts = await Post.find().sort({ createdAt: -1 });
     res.status(201).json(posts);
-    
   } catch (err) {
     console.error("Error creating post:", err);
-    res.status(500).json({ message: "Something went wrong, please try again later." });
+    res
+      .status(500)
+      .json({ message: "Something went wrong, please try again later." });
   }
 };
-
-
-
-
-
 
 /* READ - Get all posts and events */
 /* READ - Get all posts and events */
@@ -173,11 +177,13 @@ export const getFeedPosts = async (req, res) => {
       if (!user) return res.status(404).json({ message: "User not found" });
       query.userId = { $in: [...user.friends, userId] }; // Fetch user's and friends' posts
     } else {
-      const adminEditors = await User.find({ role: { $in: ["admin", "editor"] } }).select("_id");
+      const adminEditors = await User.find({
+        role: { $in: ["admin", "editor"] },
+      }).select("_id");
       const adminEditorIds = adminEditors.map((user) => user._id);
       query.$or = [
         { userId: { $in: adminEditorIds } }, // Admins & Editors' posts
-        { type: "event" } // All events
+        { type: "event" }, // All events
       ];
     }
 
@@ -188,34 +194,29 @@ export const getFeedPosts = async (req, res) => {
         path: "comments",
         select: "content userId likes replies createdAt",
         populate: [
-          { 
-            path: "userId", 
-            select: "firstName lastName picturePath" 
+          {
+            path: "userId",
+            select: "firstName lastName picturePath",
           },
-          { 
+          {
             path: "replies",
             select: "content userId likes createdAt",
-            populate: { 
-              path: "userId", 
-              select: "firstName lastName picturePath" 
-            }
-          }
+            populate: {
+              path: "userId",
+              select: "firstName lastName picturePath",
+            },
+          },
         ],
       })
       .populate("userId", "firstName lastName picturePath")
       // Populate location from the Venue model (adjust the fields as needed)
       .populate("location", "name capacity address");
 
-    
     res.status(200).json(posts);
-    
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
-
-
-
 
 // Get posts by a specific user
 
@@ -241,9 +242,6 @@ export const getUserPosts = async (req, res) => {
   }
 };
 
-
-
-
 /* LIKE */
 export const likePost = async (req, res) => {
   try {
@@ -262,7 +260,7 @@ export const likePost = async (req, res) => {
     const updatedPost = await Post.findByIdAndUpdate(
       id,
       { likes: post.likes },
-      { new: true }
+      { new: true },
     );
 
     res.status(200).json(updatedPost);
@@ -287,12 +285,10 @@ export const attendEvent = async (req, res) => {
 
     // Toggle user attendance with proper comparison
     const isAttending = post.attendees.some(
-      (attendeeId) => attendeeId.toString() === userId
+      (attendeeId) => attendeeId.toString() === userId,
     );
     if (isAttending) {
-      post.attendees = post.attendees.filter(
-        (id) => id.toString() !== userId
-      );
+      post.attendees = post.attendees.filter((id) => id.toString() !== userId);
     } else {
       post.attendees.push(userId);
     }
@@ -305,7 +301,6 @@ export const attendEvent = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 
 export const postComments = async (req, res) => {
   try {
@@ -340,13 +335,13 @@ export const postComments = async (req, res) => {
 
     if (actualParentCommentId) {
       // Update the top-level comment's replies array.
-      await Comment.findByIdAndUpdate(actualParentCommentId, { 
-        $push: { replies: newComment._id } 
+      await Comment.findByIdAndUpdate(actualParentCommentId, {
+        $push: { replies: newComment._id },
       });
     } else {
       // Push top-level comment to post
-      await Post.findByIdAndUpdate(postId, { 
-        $push: { comments: newComment._id } 
+      await Post.findByIdAndUpdate(postId, {
+        $push: { comments: newComment._id },
       });
     }
 
@@ -356,10 +351,10 @@ export const postComments = async (req, res) => {
         path: "comments",
         populate: [
           { path: "userId", select: "firstName lastName" },
-          { 
+          {
             path: "replies",
-            populate: { path: "userId", select: "firstName lastName" }
-          }
+            populate: { path: "userId", select: "firstName lastName" },
+          },
         ],
       })
       .populate("userId", "firstName lastName");
@@ -370,7 +365,6 @@ export const postComments = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 export const getPostComments = async (req, res) => {
   try {
@@ -393,8 +387,6 @@ export const getPostComments = async (req, res) => {
   }
 };
 
-
-
 export const updateComment = async (req, res) => {
   try {
     const { postId, commentId } = req.params;
@@ -404,7 +396,7 @@ export const updateComment = async (req, res) => {
     // Fetch the comment
     const comment = await Comment.findById(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
-    
+
     // Check ownership (or admin privileges)
     if (comment.userId.toString() !== userId) {
       return res.status(403).json({ message: "Unauthorized" });
@@ -440,7 +432,9 @@ export const deleteComment = async (req, res) => {
 
     // Remove comment reference from parent document
     if (comment.parentCommentId) {
-      await Comment.findByIdAndUpdate(comment.parentCommentId, { $pull: { replies: commentId } });
+      await Comment.findByIdAndUpdate(comment.parentCommentId, {
+        $pull: { replies: commentId },
+      });
     } else {
       await Post.findByIdAndUpdate(postId, { $pull: { comments: commentId } });
     }
@@ -450,7 +444,6 @@ export const deleteComment = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 
 export const toggleLikeComment = async (req, res) => {
   try {
@@ -469,10 +462,11 @@ export const toggleLikeComment = async (req, res) => {
     }
 
     await comment.save();
-    res.status(200).json({ message: isLiked ? "Like removed" : "Comment liked", likes: comment.likes.length });
+    res.status(200).json({
+      message: isLiked ? "Like removed" : "Comment liked",
+      likes: comment.likes.length,
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-

@@ -154,7 +154,7 @@ const Navbar = () => {
     console.log("🚀 markAsRead HIT");
     try {
       await axios.put(
-        "https://campusconnect-backend.onrender.com/notifications/markAsRead",
+        "https://campusconnect-ycfd.onrender.com/notifications/markAsRead",
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -170,7 +170,7 @@ const Navbar = () => {
   useEffect(() => {
     if (token) {
       axios
-        .get("https://campusconnect-backend.onrender.com/notifications", {
+        .get("https://campusconnect-ycfd.onrender.com/notifications", {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((response) => {
@@ -187,12 +187,9 @@ const Navbar = () => {
   useEffect(() => {
     if (token) {
       axios
-        .get(
-          "https://campusconnect-backend.onrender.com/messageNotifications",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        )
+        .get("https://campusconnect-ycfd.onrender.com/messageNotifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         .then((response) => {
           // Assuming response.data is an array of message notifications
           setMessageNotificationCount(response.data.length);

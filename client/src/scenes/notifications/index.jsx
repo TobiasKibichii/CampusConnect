@@ -23,7 +23,7 @@ const NotificationsPage = () => {
   // Fetch notifications from the backend when the token changes
   useEffect(() => {
     axios
-      .get("https://campusconnect-backend.onrender.com/notifications", {
+      .get("https://campusconnect-ycfd.onrender.com/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
